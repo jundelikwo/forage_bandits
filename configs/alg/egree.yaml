@@ -1,0 +1,5 @@
+# ε-Greedy (baseline) and Energy-Adaptive ε-Greedy
+name: egree
+epsilon: 0.2
+energy_adaptive: false     # set to true for EA-ε-Greedy
+Mf: ${Mf}                  # inherit global forage-cost

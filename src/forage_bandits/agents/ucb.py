@@ -1,0 +1,154 @@
+"""forage_bandits.agents.ucb
+
+Implementation of the classic UCB1 algorithm (Auer et al., 2002) **and** the
+Energy‑Adaptive variant introduced in Chapter 4 of Jiamu's thesis (Eq. 4.10).
+
+Notation used in Jiamu's thesis:
+    t            – current timestep (0‑based in code, 1‑based in paper)
+    i            – arm index
+    N_i(t)       – number of pulls of arm *i* before t
+    \hat\mu_i(t) – empirical mean reward of arm *i*
+    M(t)         – agent's internal energy, capped to [0, 1]
+    M_f          – energy cost per pull (foraging cost)
+
+Classic UCB1 chooses
+    i_t = argmax_i  ( \hat\mu_i(t) + c * sqrt(2 * ln t / N_i(t)) )
+where c ≥ 1 is a constant (often 1 or 2).
+
+Energy‑Adaptive UCB simply makes the exploration coefficient **scale with the
+current energy**:
+    c_eff(t) = c * M(t)
+This smoothly shuts off exploration as energy approaches 0.  The update rule
+for M(t) follows Eq. 4.5 in the PDF:  M ← clip(M + r_t − M_f, 0, 1).
+
+Both variants share the same incremental update logic and RNG handling.
+"""
+from __future__ import annotations
+
+from typing import Optional
+
+import numpy as np
+
+from .base import AgentBase
+
+
+class UCB(AgentBase):
+    """Upper‑Confidence‑Bound bandit agent.
+
+    Parameters
+    ----------
+    n_arms:
+        Total number of arms.
+    c:
+        Base exploration coefficient *c* (>= 1).  In EA‑UCB this is further
+        multiplied by the current energy.
+    energy_adaptive:
+        If *True* the exploration term is scaled by *M(t)*
+        (EA‑UCB).  If *False* we get classic UCB1.
+    forage_cost:
+        Energy cost *M_f* per interaction (0 ≤ M_f ≤ 1).  Ignored when
+        *energy_adaptive=False* (but accepted for API consistency).
+    M_init:
+        Initial energy *M(0)*, default 1.0.
+    rng:
+        Optional NumPy ``Generator`` or integer seed.
+    """
+
+    def __init__(
+        self,
+        n_arms: int,
+        *,
+        c: float = 1.0,
+        energy_adaptive: bool = False,
+        forage_cost: float = 0.0,
+        M_init: float = 1.0,
+        rng: Optional[np.random.Generator | int] = None,
+    ) -> None:
+        super().__init__(n_arms)
+
+        if c <= 0:
+            raise ValueError("c must be positive")
+        if not 0.0 <= M_init <= 1.0:
+            raise ValueError("M_init must be in [0, 1]")
+        if not 0.0 <= forage_cost <= 1.0:
+            raise ValueError("forage_cost must be in [0, 1]")
+
+        self._c = float(c)
+        self._ea = bool(energy_adaptive)
+        self._Mf = float(forage_cost)
+        self._M = float(M_init)
+
+        # Statistics
+        eta = 1 if energy_adaptive else 0
+        self._counts = np.full(n_arms, eta, dtype=np.int64)
+        # self._counts = np.zeros(n_arms, dtype=np.int64)
+        self._sum_rwd = np.zeros(n_arms, dtype=np.float64)
+
+        # RNG
+        self.rng: np.random.Generator
+        self.rng = (
+            rng
+            if isinstance(rng, np.random.Generator)
+            else np.random.default_rng(rng)
+        )
+
+    # ---------------------------------------------------------------------
+    # AgentBase API
+    # ---------------------------------------------------------------------
+
+    def act(self, t: int) -> int:  # noqa: D401 – short method ok
+        """Choose an arm according to (EA‑)UCB1."""
+        # Play each arm at least once to avoid division‑by‑zero.
+        unexplored = np.flatnonzero(self._counts == 0)
+        if unexplored.size:
+            return int(self.rng.choice(unexplored))
+
+        means = self._sum_rwd / self._counts
+        # UCB padding term
+        c_eff = self._c * (self._M if self._ea else 1.0)
+        pads = c_eff * np.sqrt(2.0 * np.log(max(t, 1)) / self._counts)
+        ucb_values = means + pads
+        # Break ties uniformly at random for stability
+        best = np.flatnonzero(ucb_values == ucb_values.max())
+        return int(self.rng.choice(best))
+
+    def update(self, action: int, reward: float) -> None:
+        """Update empirical means and, if enabled, energy."""
+        self._counts[action] += 1
+        self._sum_rwd[action] += reward
+
+        if self._ea:
+            self._M = float(np.clip(self._M + reward - self._Mf, 0.0, 1.0))
+
+    # ------------------------------------------------------------------
+    # Convenience helpers (not part of abstract interface)
+    # ------------------------------------------------------------------
+
+    @property
+    def energy(self) -> float:
+        """Current energy M(t)."""
+        return self._M
+
+    @property
+    def counts(self) -> np.ndarray:
+        """Number of pulls per arm."""
+        return self._counts.copy()
+
+    @property
+    def means(self) -> np.ndarray:
+        """Empirical mean reward per arm."""
+        with np.errstate(divide="ignore", invalid="ignore"):
+            means = self._sum_rwd / self._counts
+            means[self._counts == 0] = 0.0  # convention
+            return means
+
+    # ------------------------------------------------------------------
+    # Utility
+    # ------------------------------------------------------------------
+
+    def __repr__(self) -> str:  # pragma: no cover – for debugging only
+        tag = "EA‑UCB" if self._ea else "UCB1"
+        return (
+            f"<{tag}: c={self._c}, M={self._M:.3f}, counts={self._counts}, "
+            f"means={self.means}>"
+        )

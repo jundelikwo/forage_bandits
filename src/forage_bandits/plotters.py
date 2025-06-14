@@ -1,0 +1,174 @@
+"""forage_bandits.plotters
+========================
+Utility functions that turn NumPy arrays returned by :pymod:`forage_bandits.metrics`
+into Matplotlib figures.  **No disk I/O is performed by default** so the functions
+are test‑friendly; calling code decides when / where to save.
+
+Each public function follows the same contract:
+
+```
+ax = func(curve[, ax=None, label=None, kwargs…])
+```
+
+* ``curve`` may be 1‑D (single run) or 2‑D shaped *(N, T)* (batch of runs).  If
+  2‑D, the mean curve plus ±1 s.e.m. shading is drawn.
+* If ``ax`` is *None*, a new figure & axes are created.
+* All kwargs are forwarded to the underlying Matplotlib call for quick style
+  tweaks (e.g. ``color="black"``).
+
+There is **one** optional I/O helper, :pyfunc:`save_figures`, which bulk‑writes a
+``dict[str, matplotlib.figure.Figure]`` to disk.
+
+Example
+-------
+```python
+from pathlib import Path
+from forage_bandits.plotters import (
+    plot_cumulative_regret, plot_energy_trajectory, plot_hazard_curve,
+    save_figures,
+)
+
+figs = {}
+figs["fig4_2"] = plot_cumulative_regret(R).figure
+figs["fig4_3"] = plot_energy_trajectory(M).figure
+figs["fig4_4"] = plot_hazard_curve(h).figure
+
+save_figures(figs, Path("outputs/latest/figs"))
+```
+"""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Mapping, MutableMapping, Optional
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+__all__ = [
+    "plot_cumulative_regret",
+    "plot_energy_trajectory",
+    "plot_hazard_curve",
+    "save_figures",
+]
+
+
+# -----------------------------------------------------------------------------
+# Internal helpers
+# -----------------------------------------------------------------------------
+
+def _prepare_ax(ax: Optional[plt.Axes] = None) -> plt.Axes:
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 3.5), dpi=100)
+    return ax
+
+
+def _plot_curve_with_sem(
+    ax: plt.Axes,
+    curve: np.ndarray,
+    *,
+    label: str | None = None,
+    sem_alpha: float = 0.2,
+    **line_kws,
+) -> None:
+    """Plot mean ± s.e.m. if *curve* is 2‑D; otherwise a single line."""
+    curve = np.asarray(curve, dtype=float)
+    if curve.ndim == 2:
+        mean = curve.mean(axis=0)
+        sem = curve.std(axis=0, ddof=1) / np.sqrt(curve.shape[0])
+        ax.fill_between(
+            np.arange(mean.size),
+            mean - sem,
+            mean + sem,
+            alpha=sem_alpha,
+            linewidth=0,
+        )
+        ax.plot(mean, label=label, **line_kws)
+    elif curve.ndim == 1:
+        ax.plot(curve, label=label, **line_kws)
+    else:
+        raise ValueError("curve must be 1‑D or 2‑D array")
+
+
+# -----------------------------------------------------------------------------
+# Public plotting functions
+# -----------------------------------------------------------------------------
+
+def plot_cumulative_regret(
+    regret: np.ndarray,
+    *,
+    ax: Optional[plt.Axes] = None,
+    label: str | None = None,
+    **line_kws,
+) -> plt.Axes:
+    """R(t) curve."""
+    ax = _prepare_ax(ax)
+    _plot_curve_with_sem(ax, regret, label=label, **line_kws)
+    ax.set_xlabel("Timestep $t$")
+    ax.set_ylabel("Cumulative regret $R(t)$")
+    ax.set_title("Cumulative Regret")
+    if label or ax.get_legend_handles_labels()[0]:
+        ax.legend(frameon=False)
+    return ax
+
+
+def plot_energy_trajectory(
+    energy: np.ndarray,
+    *,
+    ax: Optional[plt.Axes] = None,
+    label: str | None = None,
+    **line_kws,
+) -> plt.Axes:
+    """M(t) curve."""
+    ax = _prepare_ax(ax)
+    _plot_curve_with_sem(ax, energy, label=label, **line_kws)
+    ax.set_xlabel("Timestep $t$")
+    ax.set_ylabel("Energy $M(t)$")
+    ax.set_title("Energy Trajectory")
+    ax.set_ylim(0.0, 1.05)
+    if label or ax.get_legend_handles_labels()[0]:
+        ax.legend(frameon=False)
+    return ax
+
+
+def plot_hazard_curve(
+    hazard: np.ndarray,
+    *,
+    ax: Optional[plt.Axes] = None,
+    label: str | None = None,
+    **line_kws,
+) -> plt.Axes:
+    """Hazard curve h(t)."""
+    ax = _prepare_ax(ax)
+    _plot_curve_with_sem(ax, hazard, label=label, **line_kws)
+    ax.set_xlabel("Timestep $t$")
+    ax.set_ylabel("Hazard $h(t)$")
+    ax.set_title("Hazard Curve")
+    ax.set_ylim(0.0, 1.05)
+    if label or ax.get_legend_handles_labels()[0]:
+        ax.legend(frameon=False)
+    return ax
+
+
+# -----------------------------------------------------------------------------
+# Bulk saver
+# -----------------------------------------------------------------------------
+
+def save_figures(
+    figures: Mapping[str, plt.Figure] | Mapping[str, plt.Axes],
+    out_dir: Path,
+    *,
+    dpi: int = 300,
+    fmt: str = "png",
+) -> None:
+    """Save each figure or axes in *figures* under *out_dir* / f"{name}.{fmt}"."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, obj in figures.items():
+        fig: plt.Figure
+        if isinstance(obj, plt.Axes):
+            fig = obj.figure  # type: ignore[assignment]
+        elif isinstance(obj, plt.Figure):
+            fig = obj
+        else:
+            raise TypeError("values must be matplotlib Figure or Axes")
+        filepath = out_dir / f"{name}.{fmt}"
+        fig.savefig(filepath, dpi=dpi, format=fmt, bbox_inches="tight")

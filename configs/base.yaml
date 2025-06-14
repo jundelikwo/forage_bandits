@@ -1,0 +1,21 @@
+# ------------------------------------------------------------------
+# Global defaults that every run inherits unless you override them.
+# ------------------------------------------------------------------
+defaults:
+  - _self_  # Required by Hydra 1.1+
+  - env: single_optimal      # which environment definition to load
+  - alg: egree               # which agent definition to load
+
+# Reproducibility ---------------------------------------------------
+seed: 42         # master RNG seed; per-run seeds = seed + run_id
+
+# Episode settings --------------------------------------------------
+T: 500           # timesteps per episode
+n_runs: 200      # how many independent episodes to launch as a batch
+Mf: 0.1         # forage-cost (identical across agents/environments)
+
+# Plot switches -----------------------------------------------------
+plot:
+  regret: true
+  energy: true
+  hazard: true

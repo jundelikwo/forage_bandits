@@ -1,0 +1,6 @@
+# Single-Optimal Gaussian (Section 4.3)
+name: single_optimal
+n_arms: 10             # number of arms
+mu_opt: 0.2       # mean of the single best arm
+mu_sub: 0.04    # mean of every other arm
+sigma: 0.05       # shared Gaussian noise std-dev
