@@ -52,7 +52,9 @@ forage-run env=single_optimal alg=egree alg.energy_adaptive=true
 Run experiments:
 
 ```bash
-python experiments/experiment_1_arms.py 
+python experiments/predicted_lifetime_regret.py
+python experiments/pairwise_comparison.py env.n_arms=4
+python experiments/pairwise_comparison.py env.n_arms=12
 ```
 
 ## Configuration
@@ -120,6 +122,7 @@ forage-bandits/
 │   ├── base.yaml              # Global defaults
 │   ├── env/                   # Environment definitions
 │   └── alg/                   # Algorithm definitions
+├── experiments/               # Different experiments
 ├── src/forage_bandits/        # Source code
 │   ├── agents/               # Bandit algorithms
 │   ├── environments.py       # Reward generators
@@ -128,20 +131,3 @@ forage-bandits/
 │   └── plotters.py          # Visualization
 └── tests/                    # Test suite
 ```
-
-## Citation
-
-If you use this code in your research, please cite:
-
-```bibtex
-@software{forage_bandits,
-  author = {Forage Bandits Contributors},
-  title = {Forage Bandits: Energy-aware multi-armed bandit algorithms},
-  year = {2024},
-  url = {https://github.com/yourusername/forage-bandits}
-}
-```
-
-## License
-
-MIT License - see LICENSE file for details

@@ -179,19 +179,51 @@ def plot_lifetime_distribution(
 ) -> plt.Axes:
     """Plot distribution of predicted lifetimes."""
     ax = _prepare_ax(ax)
-    ax.hist(lifetimes, bins=bins, label=label, alpha=0.7, **hist_kws)
+    
+    # Get histogram data for both distributions
+    hist1, bin_edges = np.histogram(lifetimes, bins=bins)
+    if other_lifetimes is not None:
+        hist2, _ = np.histogram(other_lifetimes, bins=bin_edges)
+    else:
+        hist2 = None
+    
+    # Calculate bin centers and widths
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    bin_width = bin_edges[1] - bin_edges[0]
+    
+    # Plot first distribution (top half)
+    ax.bar(bin_centers, hist1, width=bin_width, label=label, alpha=0.7, **hist_kws)
     mean_lifetime = np.mean(lifetimes)
     ax.axvline(mean_lifetime, color='blue', linestyle='--', 
                label=f'Mean: {mean_lifetime:.1f}')
     
+    # Plot second distribution (bottom half) if provided
     if other_lifetimes is not None:
-        ax.hist(other_lifetimes, bins=bins, label=other_label, alpha=0.7, **hist_kws)
+        # Invert the second histogram
+        ax.bar(bin_centers, -hist2, width=bin_width, label=other_label, alpha=0.7, **hist_kws)
         other_mean_lifetime = np.mean(other_lifetimes)
         ax.axvline(other_mean_lifetime, color='orange', linestyle='--', 
                    label=f'Mean: {other_mean_lifetime:.1f}')
+    
+    # Customize plot
     ax.set_xlabel("Lifetime")
     ax.set_ylabel("Frequency")
     ax.set_title("Lifetime Distribution")
+    
+    # Add a horizontal line at y=0
+    ax.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+    
+    # Adjust y-axis limits to be symmetric and set custom tick labels
+    if other_lifetimes is not None:
+        max_freq = max(np.max(hist1), np.max(hist2))
+        ax.set_ylim(-max_freq * 1.1, max_freq * 1.1)
+        
+        # Get current y-ticks
+        yticks = ax.get_yticks()
+        # Create new tick labels with positive values
+        yticklabels = [f'{abs(y):.0f}' for y in yticks]
+        ax.set_yticklabels(yticklabels)
+    
     if label or ax.get_legend_handles_labels()[0]:
         ax.legend(frameon=False)
     ax.grid(True, alpha=0.3)
