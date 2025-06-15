@@ -79,6 +79,8 @@ class EpsilonGreedy(AgentBase):
 
         self._rng = rng if rng is not None else np.random.default_rng()
 
+        self._last_was_explore = False
+
     # ------------------------------------------------------------------
     # AgentBase interface
     # ------------------------------------------------------------------
@@ -90,8 +92,10 @@ class EpsilonGreedy(AgentBase):
         )
         if self._rng.random() < eps_eff:
             # Explore uniformly at random
+            self._last_was_explore = True
             return int(self._rng.integers(self.n_arms))
         # Exploit – tie‑break randomly among arms with maximal estimated value
+        self._last_was_explore = False
         best_value = self.values.max()
         best_arms = np.flatnonzero(np.isclose(self.values, best_value))
         return int(self._rng.choice(best_arms))
@@ -105,6 +109,10 @@ class EpsilonGreedy(AgentBase):
 
         # Energy dynamics for EA variant
         self.energy = float(np.clip(self.energy + reward - self.forage_cost, 0.0, 1.0))
+
+    @property
+    def is_exploring(self) -> bool:
+        return self._last_was_explore
 
     # ------------------------------------------------------------------
     # Convenience helpers (optional)

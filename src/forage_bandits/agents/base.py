@@ -59,6 +59,11 @@ class AgentBase(ABC):
     def update(self, action: int, reward: float) -> None:  # noqa: D401
         """Observe the reward obtained for *action* and update internal state."""
 
+    @property
+    def is_exploring(self) -> bool:
+        """Return True if the last action was exploratory"""
+        return False  # Default implementation
+
     # ------------------------------------------------------------------
     #  Optional helper hooks
     # ------------------------------------------------------------------

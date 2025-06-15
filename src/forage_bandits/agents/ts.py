@@ -83,6 +83,8 @@ class ThompsonSampling(AgentBase):
         self._t = 0
         self.energy: float = 1.0
 
+        self._last_was_explore = False
+
     # ------------------------------------------------------------------
     # Simulator API
     # ------------------------------------------------------------------
@@ -98,6 +100,11 @@ class ThompsonSampling(AgentBase):
         sigma = np.sqrt(var)
         samples = self._rng.normal(loc=self._mu, scale=sigma)
         arm = int(np.argmax(samples))
+
+        # Check if selection was exploratory
+        empirical_best = np.argmax(self._mu)
+        self._last_was_explore = (arm != empirical_best)
+
         return arm
 
     def update(self, arm: int, reward: float) -> None:
@@ -115,6 +122,10 @@ class ThompsonSampling(AgentBase):
 
         # Advance time
         self._t += 1
+
+    @property
+    def is_exploring(self) -> bool:
+        return self._last_was_explore
 
     # ------------------------------------------------------------------
     # Diagnostics helpers

@@ -70,6 +70,7 @@ class SimulationResult:
     rewards: np.ndarray  # shape (T,) or (N, T)
     actions: np.ndarray  # same shape as rewards
     energy: np.ndarray | None  # same shape or None if agent has no .M attr
+    exploring: np.ndarray | None  # same shape or None if agent has no .M attr
     opt_mean: float  # true µ* of the environment
 
     # cache fields – populated on first access
@@ -96,11 +97,8 @@ class SimulationResult:
         if self.rewards.ndim == 1:
             raise ValueError("hazard is defined only for batch runs (N>1)")
         if self._hazard is None:
-            self._hazard = _m.hazard_curve(self.energy)
-            lifetime = _m.predicted_lifetime(self._hazard)
-            energy = _m.energy_trajectory(self.energy)
-            print(f"Lifetime: {lifetime}, size: {lifetime.shape}")
-            print(f"Energy: {energy}, size: {energy.shape}")
+            energy = _m.energy_trajectory(self.rewards, Mf=0.1, M0=1.0)
+            self._hazard = _m.hazard_curve(energy)
         return self._hazard
 
 
@@ -128,6 +126,7 @@ def run_episode(
     rewards = np.empty(T, dtype=float)
     actions = np.empty(T, dtype=int)
     energy = np.empty(T, dtype=float) if hasattr(agent, "energy") else None
+    exploring = np.empty(T, dtype=bool)
 
     for t in range(T):
         arm = agent.act(t)
@@ -135,6 +134,7 @@ def run_episode(
 
         rewards[t] = reward
         actions[t] = arm
+        exploring[t] = agent.is_exploring
         if energy is not None:
             energy[t] = float(agent.energy)
 
@@ -144,6 +144,7 @@ def run_episode(
         rewards=rewards,
         actions=actions,
         energy=energy,
+        exploring=exploring,
         opt_mean=float(env.true_means().max()),
     )
 
@@ -168,7 +169,8 @@ def run_batch(
     # Preallocate
     rewards = np.empty((n_runs, T), dtype=float)
     actions = np.empty((n_runs, T), dtype=int)
-    energy = None  # we fill lazily when we know agent exposes .M
+    energy = np.empty((n_runs, T), dtype=int)
+    exploring = np.empty((n_runs, T), dtype=int)
     opt_mean: float | None = None
 
     for i in range(n_runs):
@@ -178,10 +180,10 @@ def run_batch(
         res_i = run_episode(env, agent, T)
         rewards[i] = res_i.rewards
         actions[i] = res_i.actions
-        if res_i.energy is not None:
-            if energy is None:
-                energy = np.empty((n_runs, T), dtype=float)
-            energy[i] = res_i.energy
+        exploring[i] = res_i.exploring
+        energy[i] = res_i.energy
+        if res_i.energy is None:
+            raise RuntimeError("energy should not be None")
         if opt_mean is None:
             opt_mean = res_i.opt_mean
 
@@ -192,6 +194,7 @@ def run_batch(
         rewards=rewards,
         actions=actions,
         energy=energy,
+        exploring=exploring,
         opt_mean=opt_mean,
     )
 

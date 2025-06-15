@@ -28,9 +28,12 @@ from .plotters import (
     plot_cumulative_regret,
     plot_energy_trajectory,
     plot_hazard_curve,
+    plot_lifetime_distribution,
+    plot_exploration_rate,
     save_figures,
 )
 from .simulate import from_config
+from .metrics import predicted_lifetime
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +61,11 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
     # ------------------------------------------------------------------
     figs: Dict[str, plt.Figure] = {}
 
+    # Plot lifetime if enabled
+    if cfg.plot.lifetime:
+        lifetimes = predicted_lifetime(result.hazard)
+        figs["fig4_5_lifetime"] = plot_lifetime_distribution(lifetimes)
+
     # Plot regret if enabled
     if cfg.plot.regret:
         figs["fig4_2_regret"] = plot_cumulative_regret(result.cumulative_regret)
@@ -69,6 +77,10 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
     # Plot hazard if enabled and we have batch runs
     if cfg.plot.hazard and result.rewards.ndim == 2:
         figs["fig4_4_hazard"] = plot_hazard_curve(result.hazard)
+        
+    # Plot exploration rate if enabled and we have batch runs
+    if cfg.plot.explore and result.rewards.ndim == 2:
+        figs["fig4_6_explore"] = plot_exploration_rate(result.exploring)
 
     # ------------------------------------------------------------------
     # 3. Save to disk (figures & raw arrays)
@@ -89,9 +101,10 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
         "regret": result.cumulative_regret,
     }
     
-    # Only include hazard for batch runs
+    # Only include hazard and exploring for batch runs
     if result.rewards.ndim == 2:
         save_data["hazard"] = result.hazard
+        save_data["exploring"] = result.exploring
 
     np.savez_compressed(npz_path, **save_data)
 

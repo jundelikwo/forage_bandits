@@ -95,6 +95,8 @@ class UCB(AgentBase):
             else np.random.default_rng(rng)
         )
 
+        self._last_was_explore = False
+
     # ---------------------------------------------------------------------
     # AgentBase API
     # ---------------------------------------------------------------------
@@ -131,7 +133,13 @@ class UCB(AgentBase):
         
         # Break ties randomly among best options
         best_arms = np.flatnonzero(ucb_values == ucb_values.max())
-        return int(self.rng.choice(best_arms))
+        arm = int(self.rng.choice(best_arms))
+
+        # Check if selection was exploratory
+        empirical_best = np.argmax(self.means)
+        self._last_was_explore = (arm != empirical_best)
+
+        return arm
 
     def update(self, action: int, reward: float) -> None:
         """Update empirical means and energy."""
@@ -141,6 +149,10 @@ class UCB(AgentBase):
         # Energy update with clipping to [0, 1] (Eq. 4.1)
         new_energy = self.energy + reward - self._Mf
         self.energy = float(np.clip(new_energy, 0.0, 1.0))
+
+    @property
+    def is_exploring(self) -> bool:
+        return self._last_was_explore
 
     # ------------------------------------------------------------------
     # Convenience helpers (not part of abstract interface)

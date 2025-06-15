@@ -19,3 +19,5 @@ plot:
   regret: true
   energy: true
   hazard: true
+  lifetime: true
+  explore: true

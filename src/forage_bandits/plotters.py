@@ -10,8 +10,8 @@ Each public function follows the same contract:
 ax = func(curve[, ax=None, label=None, kwargs…])
 ```
 
-* ``curve`` may be 1‑D (single run) or 2‑D shaped *(N, T)* (batch of runs).  If
-  2‑D, the mean curve plus ±1 s.e.m. shading is drawn.
+* ``curve`` may be 1‑D (single run) or 2‑D shaped *(N, T)* (batch of runs).  If
+  2‑D, the mean curve plus ±1 s.e.m. shading is drawn.
 * If ``ax`` is *None*, a new figure & axes are created.
 * All kwargs are forwarded to the underlying Matplotlib call for quick style
   tweaks (e.g. ``color="black"``).
@@ -25,13 +25,15 @@ Example
 from pathlib import Path
 from forage_bandits.plotters import (
     plot_cumulative_regret, plot_energy_trajectory, plot_hazard_curve,
-    save_figures,
+    plot_lifetime_distribution, plot_exploration_rate, save_figures,
 )
 
 figs = {}
 figs["fig4_2"] = plot_cumulative_regret(R).figure
 figs["fig4_3"] = plot_energy_trajectory(M).figure
 figs["fig4_4"] = plot_hazard_curve(h).figure
+figs["fig4_5"] = plot_lifetime_distribution(L).figure
+figs["fig4_6"] = plot_exploration_rate(E).figure
 
 save_figures(figs, Path("outputs/latest/figs"))
 ```
@@ -48,6 +50,8 @@ __all__ = [
     "plot_cumulative_regret",
     "plot_energy_trajectory",
     "plot_hazard_curve",
+    "plot_lifetime_distribution",
+    "plot_exploration_rate",
     "save_figures",
 ]
 
@@ -98,11 +102,15 @@ def plot_cumulative_regret(
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
+    other_label: str | None = None,
+    other_regret: np.ndarray | None = None,
     **line_kws,
 ) -> plt.Axes:
     """R(t) curve."""
     ax = _prepare_ax(ax)
     _plot_curve_with_sem(ax, regret, label=label, **line_kws)
+    if other_regret is not None:
+        _plot_curve_with_sem(ax, other_regret, label=other_label, **line_kws)
     ax.set_xlabel("Timestep $t$")
     ax.set_ylabel("Cumulative regret $R(t)$")
     ax.set_title("Cumulative Regret")
@@ -113,14 +121,18 @@ def plot_cumulative_regret(
 
 def plot_energy_trajectory(
     energy: np.ndarray,
+    other_energy: np.ndarray | None = None,
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
+    other_label: str | None = None,
     **line_kws,
 ) -> plt.Axes:
     """M(t) curve."""
     ax = _prepare_ax(ax)
     _plot_curve_with_sem(ax, energy, label=label, **line_kws)
+    if other_energy is not None:
+        _plot_curve_with_sem(ax, other_energy, label=other_label, **line_kws)
     ax.set_xlabel("Timestep $t$")
     ax.set_ylabel("Energy $M(t)$")
     ax.set_title("Energy Trajectory")
@@ -132,20 +144,95 @@ def plot_energy_trajectory(
 
 def plot_hazard_curve(
     hazard: np.ndarray,
+    other_hazard: np.ndarray | None = None,
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
+    other_label: str | None = None,
+    ylim: tuple[float, float] | None = (0.0, 1.05),
     **line_kws,
 ) -> plt.Axes:
     """Hazard curve h(t)."""
     ax = _prepare_ax(ax)
     _plot_curve_with_sem(ax, hazard, label=label, **line_kws)
+    if other_hazard is not None:
+        _plot_curve_with_sem(ax, other_hazard, label=other_label, **line_kws)
     ax.set_xlabel("Timestep $t$")
     ax.set_ylabel("Hazard $h(t)$")
     ax.set_title("Hazard Curve")
-    ax.set_ylim(0.0, 1.05)
+    if ylim is not None:
+        ax.set_ylim(ylim)
     if label or ax.get_legend_handles_labels()[0]:
         ax.legend(frameon=False)
+    return ax
+
+
+def plot_lifetime_distribution(
+    lifetimes: np.ndarray,
+    other_lifetimes: np.ndarray | None = None,
+    *,
+    ax: Optional[plt.Axes] = None,
+    label: str | None = None,
+    other_label: str | None = None,
+    bins: int = 30,
+    **hist_kws,
+) -> plt.Axes:
+    """Plot distribution of predicted lifetimes."""
+    ax = _prepare_ax(ax)
+    ax.hist(lifetimes, bins=bins, label=label, alpha=0.7, **hist_kws)
+    mean_lifetime = np.mean(lifetimes)
+    ax.axvline(mean_lifetime, color='blue', linestyle='--', 
+               label=f'Mean: {mean_lifetime:.1f}')
+    
+    if other_lifetimes is not None:
+        ax.hist(other_lifetimes, bins=bins, label=other_label, alpha=0.7, **hist_kws)
+        other_mean_lifetime = np.mean(other_lifetimes)
+        ax.axvline(other_mean_lifetime, color='orange', linestyle='--', 
+                   label=f'Mean: {other_mean_lifetime:.1f}')
+    ax.set_xlabel("Lifetime")
+    ax.set_ylabel("Frequency")
+    ax.set_title("Lifetime Distribution")
+    if label or ax.get_legend_handles_labels()[0]:
+        ax.legend(frameon=False)
+    ax.grid(True, alpha=0.3)
+    
+    return ax
+
+
+def plot_exploration_rate(
+    exploring: np.ndarray,
+    other_exploring: np.ndarray | None = None,
+    *,
+    ax: Optional[plt.Axes] = None,
+    label: str | None = None,
+    other_label: str | None = None,
+    start_explore: bool = False,
+    **line_kws,
+) -> plt.Axes:
+    """Plot exploration rate over time."""
+    ax = _prepare_ax(ax)
+    
+    # Calculate mean exploration rate across runs
+    mean_explore = np.mean(exploring, axis=0)
+    if start_explore:
+        mean_explore[0] = 1.0
+        
+    # Plot mean exploration rate
+    ax.plot(mean_explore, label=label, **line_kws)
+
+    if other_exploring is not None:
+        other_mean_explore = np.mean(other_exploring, axis=0)
+        ax.plot(other_mean_explore, label=other_label, **line_kws)
+    
+    # Customize plot
+    ax.set_xlabel("Timestep $t$")
+    ax.set_ylabel("Exploration Rate")
+    ax.set_title("Exploration Rate Over Time")
+    ax.set_ylim(0, 1.05)  # Exploration rate is between 0 and 1
+    if label or ax.get_legend_handles_labels()[0]:
+        ax.legend(frameon=False)
+    ax.grid(True, alpha=0.3)
+    
     return ax
 
 
