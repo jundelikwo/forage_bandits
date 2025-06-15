@@ -1,10 +1,3 @@
-"""Experiment 1: Effect of number of arms on regret and lifetime.
-
-This script runs simulations for different numbers of arms (2-15) and different
-algorithms (ε-Greedy, UCB, TS) in both energy-adaptive and non-energy-adaptive
-versions. For each combination, it records the final regret and mean lifetime.
-"""
-
 import json
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -15,7 +8,7 @@ from omegaconf import DictConfig, OmegaConf
 import matplotlib.pyplot as plt
 
 from forage_bandits.simulate import from_config
-from forage_bandits.metrics import hazard_curve, predicted_lifetime
+from forage_bandits.metrics import hazard_curve, predicted_lifetime, energy_trajectory
 
 
 def run_simulation(
@@ -74,23 +67,19 @@ def run_simulation(
     # Calculate mean lifetime and std
     if result.energy is not None:
         lifetimes = []
-        regrets = []
         for run in range(result.energy.shape[0]):
-            energy = result.energy[run]
+            # energy = result.energy[run]
+            energy = energy_trajectory(result.rewards[run], Mf=0.1, M0=1.0)
             hazard = hazard_curve(energy)
             lifetime = predicted_lifetime(hazard)
             lifetimes.append(lifetime)
-            regrets.append(result.cumulative_regret[run, -1])
         lifetimes = np.array(lifetimes)
-        regrets = np.array(regrets)
-        mean_regret = float(np.mean(regrets))
-        mean_regret_std = float(np.std(regrets))
         mean_lifetime = float(np.mean(lifetimes))
         mean_lifetime_std = float(np.std(lifetimes))
     else:
         raise RuntimeError("result.energy should not be None")
     
-    return mean_regret, mean_regret_std, mean_lifetime, mean_lifetime_std
+    return final_regret, final_regret_std, mean_lifetime, mean_lifetime_std
 
 
 def main() -> None:
@@ -237,18 +226,18 @@ def main() -> None:
     
     # Adjust layout and save
     plt.tight_layout()
-    plt.savefig('experiments/results/experiment_1_arms.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'experiments/results/predicted_lifetime_regret_{cfg.env.name}.png', dpi=300, bbox_inches='tight')
     plt.close()
     
     # Save results
     output_dir = Path("experiments/results")
     output_dir.mkdir(exist_ok=True)
     
-    with open(output_dir / "experiment_1_arms.json", "w") as f:
+    with open(output_dir / f"predicted_lifetime_regret_{cfg.env.name}.json", "w") as f:
         json.dump(results, f, indent=2)
     
-    print("\nResults saved to experiments/results/experiment_1_arms.json")
-    print("Plot saved to experiments/results/experiment_1_arms.png")
+    print(f"\nResults saved to experiments/results/predicted_lifetime_regret_{cfg.env.name}.json")
+    print(f"Plot saved to experiments/results/predicted_lifetime_regret_{cfg.env.name}.png")
 
 
 if __name__ == "__main__":
