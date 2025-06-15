@@ -88,9 +88,9 @@ class SingleOptimalEnv:
         self,
         n_arms: int,
         *,
-        mu_opt: float = 1.0,
-        mu_sub: float = 0.0,
-        sigma: float = 0.1,
+        mu_opt: float = 0.2,
+        mu_sub: float = 0.04,
+        sigma: float = 0.02,
         opt_index: int | None = None,
         rng: Union[int, np.random.Generator, None] = None,
     ) -> None:
@@ -138,21 +138,28 @@ class SigmoidEnv:
         self,
         n_arms: int,
         *,
-        k: float = 1.0,
-        sigma: float = 0.1,
+        mu_opt: float = 0.2,
+        k: float = 10.0,
+        sigma: float = 0.02,
         rng: Union[int, np.random.Generator, None] = None,
     ) -> None:
         self._rng = np.random.default_rng(rng)
         self.n_arms = int(n_arms)
         self.k = float(k)
         self.sigma = float(sigma)
+        self.mu_opt = float(mu_opt)
 
         # Compute means once
-        centre = (n_arms - 1) / 2.0
-        self._means = np.array(
-            [1.0 / (1.0 + math.exp(-self.k * (i - centre))) for i in range(n_arms)],
-            dtype=np.float64,
-        )
+        # centre = (n_arms - 1) / 2.0
+        # self._means = np.array(
+        #     [1.0 / (1.0 + math.exp(-self.k * (i - centre))) for i in range(n_arms)],
+        #     dtype=np.float64,
+        # )
+        self._means = np.array([
+            # self.mu_opt / (1 + math.exp(-self.k * (i/(n_arms-1) - 0.5))) # I'm not sure if it is supposed to be this way
+            self.mu_opt / (1 + math.exp(-self.k * ((i+1)/n_arms - 0.5)))
+            for i in range(n_arms)
+        ], dtype=np.float64)
 
     # ------------------------------------------------------------------
     def pull(self, arm: int) -> float:  # noqa: D401

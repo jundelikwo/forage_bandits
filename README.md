@@ -55,6 +55,9 @@ Run experiments:
 python experiments/predicted_lifetime_regret.py
 python experiments/pairwise_comparison.py env.n_arms=4
 python experiments/pairwise_comparison.py env.n_arms=12
+
+python experiments/predicted_lifetime_regret.py env=sigmoid
+python experiments/pairwise_comparison.py env.n_arms=10 env=sigmoid
 ```
 
 ## Configuration

@@ -1,6 +1,5 @@
 # Sigmoid Gaussian landscape (Eq. 4.17)
 name: sigmoid
 n_arms: 11             # arms indexed 0 … K-1
-k: 1.5            # slope of the logistic
-i0: 5             # index where μ ≈ 0.5
-sigma: 0.05
+k: 10            # slope of the logistic
+sigma: 0.02
