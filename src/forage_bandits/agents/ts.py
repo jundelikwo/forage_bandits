@@ -60,7 +60,7 @@ class ThompsonSampling(AgentBase):
         *,
         energy_adaptive: bool = False,
         forage_cost: float = 0.0,
-        eta: int | float = None,
+        eta: int | float | None = None,
         alpha0: float = 1.0,
         beta0: float = 1.0,
         rng: Union[np.random.Generator, int, None] = None,
@@ -74,21 +74,21 @@ class ThompsonSampling(AgentBase):
         self._mu = np.zeros(n_arms, dtype=np.float64)  # μ̄ₐ
         # If eta not supplied, use baseline 0 or EA default 1
         if eta is None:
-            eta = 1 if self.energy_adaptive else 0
+            eta = 1
         self._n = np.full(n_arms, eta, dtype=np.float64)  # nₐ (can be float)
         self._alpha = np.full(n_arms, alpha0, dtype=np.float64)
         self._beta = np.full(n_arms, beta0, dtype=np.float64)
 
         # Global time step & energy
         self._t = 0
-        self.M: float = 1.0
+        self.energy: float = 1.0
 
     # ------------------------------------------------------------------
     # Simulator API
     # ------------------------------------------------------------------
     def act(self, t: int) -> int:  # noqa: D401
         """Sample NG posterior and return arm index with biggest sample."""
-        energy_factor = self.M if self.energy_adaptive else 1.0
+        energy_factor = self.energy if self.energy_adaptive else 1.0
 
         # Draw from Gamma for each arm → tau (precision)
         tau = self._rng.gamma(shape=self._alpha, scale=1.0 / self._beta)
@@ -111,9 +111,7 @@ class ThompsonSampling(AgentBase):
         self._alpha[arm] += 0.5
         self._beta[arm] += (reward * reward - mu_old * mu_old) / (2.0 * self._n[arm])
 
-        # Energy update for EA‑TS
-        if self.energy_adaptive:
-            self.M = float(np.clip(self.M + reward - self.Mf, 0.0, 1.0))
+        self.energy = float(np.clip(self.energy + reward - self.Mf, 0.0, 1.0))
 
         # Advance time
         self._t += 1
@@ -141,4 +139,4 @@ class ThompsonSampling(AgentBase):
         self._alpha.fill(1.0)
         self._beta.fill(1.0)
         self._t = 0
-        self.M = 1.0
+        self.energy = 1.0

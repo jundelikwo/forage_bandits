@@ -44,6 +44,8 @@ class EpsilonGreedy(AgentBase):
         *energy_adaptive* is *True*.
     rng:
         Optional NumPy random generator to make simulation seeds reproducible.
+    eta:
+        Pseudo-count for unseen arms. Default is 1 for EA-ε-Greedy, 0 for baseline.
     """
 
     def __init__(
@@ -55,13 +57,17 @@ class EpsilonGreedy(AgentBase):
         init_energy: float = 1.0,
         forage_cost: float = 0.0,
         rng: Optional[np.random.Generator] = None,
+        eta: int | float | None = None,
     ) -> None:
         self.n_arms = n_arms
         self.epsilon = float(epsilon)
         self.energy_adaptive = energy_adaptive
 
         # Statistics
-        self.counts = np.zeros(n_arms, dtype=np.int64)
+        if eta is None:
+            eta = 1
+            # eta = 1 if energy_adaptive else 0
+        self.counts = np.full(n_arms, eta, dtype=np.int64)
         self.values = np.zeros(n_arms, dtype=np.float64)  # empirical means μ̄_a
 
         # Energy bookkeeping
@@ -98,9 +104,7 @@ class EpsilonGreedy(AgentBase):
         self.values[action] += (reward - self.values[action]) / n
 
         # Energy dynamics for EA variant
-        if self.energy_adaptive:
-            self.energy = max(0.0, self.energy + reward - self.forage_cost)
-            # print(f"Energy: {self.energy}")
+        self.energy = float(np.clip(self.energy + reward - self.forage_cost, 0.0, 1.0))
 
     # ------------------------------------------------------------------
     # Convenience helpers (optional)

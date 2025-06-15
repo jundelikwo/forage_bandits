@@ -96,7 +96,11 @@ class SimulationResult:
         if self.rewards.ndim == 1:
             raise ValueError("hazard is defined only for batch runs (N>1)")
         if self._hazard is None:
-            self._hazard = _m.hazard_curve(self.rewards, Mf=0.0, M0=1.0)
+            self._hazard = _m.hazard_curve(self.energy)
+            lifetime = _m.predicted_lifetime(self._hazard)
+            energy = _m.energy_trajectory(self.energy)
+            print(f"Lifetime: {lifetime}, size: {lifetime.shape}")
+            print(f"Energy: {energy}, size: {energy.shape}")
         return self._hazard
 
 
@@ -123,17 +127,18 @@ def run_episode(
     """
     rewards = np.empty(T, dtype=float)
     actions = np.empty(T, dtype=int)
-    energy = np.empty(T, dtype=float) if hasattr(agent, "M") else None
+    energy = np.empty(T, dtype=float) if hasattr(agent, "energy") else None
 
     for t in range(T):
         arm = agent.act(t)
         reward = env.pull(arm)
-        agent.update(arm, reward)
 
         rewards[t] = reward
         actions[t] = arm
         if energy is not None:
-            energy[t] = float(agent.M)
+            energy[t] = float(agent.energy)
+
+        agent.update(arm, reward)
 
     return SimulationResult(
         rewards=rewards,

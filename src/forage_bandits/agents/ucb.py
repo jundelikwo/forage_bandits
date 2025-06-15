@@ -52,6 +52,8 @@ class UCB(AgentBase):
         Initial energy *M(0)*, default 1.0.
     rng:
         Optional NumPy ``Generator`` or integer seed.
+    eta:
+        Pseudo-count for unseen arms. Default is 1 for EA-UCB, 0 for baseline.
     """
 
     def __init__(
@@ -61,27 +63,28 @@ class UCB(AgentBase):
         c: float = 1.0,
         energy_adaptive: bool = False,
         forage_cost: float = 0.0,
-        M_init: float = 1.0,
+        init_energy: float = 1.0,
         rng: Optional[np.random.Generator | int] = None,
+        eta: int | float | None = None,
     ) -> None:
         super().__init__(n_arms)
 
         if c <= 0:
             raise ValueError("c must be positive")
-        if not 0.0 <= M_init <= 1.0:
-            raise ValueError("M_init must be in [0, 1]")
+        if not 0.0 <= init_energy <= 1.0:
+            raise ValueError("init_energy must be in [0, 1]")
         if not 0.0 <= forage_cost <= 1.0:
             raise ValueError("forage_cost must be in [0, 1]")
 
         self._c = float(c)
-        self._ea = bool(energy_adaptive)
+        self.energy_adaptive = bool(energy_adaptive)
         self._Mf = float(forage_cost)
-        self._M = float(M_init)
+        self.energy = float(init_energy)
 
         # Statistics
-        eta = 1 if energy_adaptive else 0
+        if eta is None:
+            eta = 1
         self._counts = np.full(n_arms, eta, dtype=np.int64)
-        # self._counts = np.zeros(n_arms, dtype=np.int64)
         self._sum_rwd = np.zeros(n_arms, dtype=np.float64)
 
         # RNG
@@ -96,38 +99,52 @@ class UCB(AgentBase):
     # AgentBase API
     # ---------------------------------------------------------------------
 
-    def act(self, t: int) -> int:  # noqa: D401 – short method ok
-        """Choose an arm according to (EA‑)UCB1."""
-        # Play each arm at least once to avoid division‑by‑zero.
-        unexplored = np.flatnonzero(self._counts == 0)
-        if unexplored.size:
-            return int(self.rng.choice(unexplored))
+    # def act(self, t: int) -> int:  # noqa: D401 – short method ok
+    #     """Choose an arm according to (EA‑)UCB1."""
+    #     # Play each arm at least once to avoid division‑by‑zero.
+    #     unexplored = np.flatnonzero(self._counts == 0)
+    #     if unexplored.size:
+    #         return int(self.rng.choice(unexplored))
 
-        means = self._sum_rwd / self._counts
-        # UCB padding term
-        c_eff = self._c * (self._M if self._ea else 1.0)
-        pads = c_eff * np.sqrt(2.0 * np.log(max(t, 1)) / self._counts)
+    #     means = self._sum_rwd / self._counts
+    #     # UCB padding term
+    #     c_eff = self._c * (self.energy if self.energy_adaptive else 1.0)
+    #     pads = c_eff * np.sqrt(2.0 * np.log(max(t, 1)) / self._counts)
+    #     ucb_values = means + pads
+    #     # Break ties uniformly at random for stability
+    #     best = np.flatnonzero(ucb_values == ucb_values.max())
+    #     return int(self.rng.choice(best))
+
+    def act(self, t: int) -> int:
+        """Choose an arm according to (EA‑)UCB1."""
+        # Convert 0-based index to 1-based trial count
+        total_trials = t + 1
+        
+        # Compute empirical means safely
+        means = np.zeros_like(self._counts, dtype=float)
+        np.divide(self._sum_rwd, self._counts, out=means, where=self._counts != 0)
+        
+        c_eff = self._c * (self.energy if self.energy_adaptive else 1.0)
+        pads = c_eff * np.sqrt(2.0 * np.log(total_trials) / self._counts)
+        
         ucb_values = means + pads
-        # Break ties uniformly at random for stability
-        best = np.flatnonzero(ucb_values == ucb_values.max())
-        return int(self.rng.choice(best))
+        
+        # Break ties randomly among best options
+        best_arms = np.flatnonzero(ucb_values == ucb_values.max())
+        return int(self.rng.choice(best_arms))
 
     def update(self, action: int, reward: float) -> None:
-        """Update empirical means and, if enabled, energy."""
+        """Update empirical means and energy."""
         self._counts[action] += 1
         self._sum_rwd[action] += reward
-
-        if self._ea:
-            self._M = float(np.clip(self._M + reward - self._Mf, 0.0, 1.0))
+        
+        # Energy update with clipping to [0, 1] (Eq. 4.1)
+        new_energy = self.energy + reward - self._Mf
+        self.energy = float(np.clip(new_energy, 0.0, 1.0))
 
     # ------------------------------------------------------------------
     # Convenience helpers (not part of abstract interface)
     # ------------------------------------------------------------------
-
-    @property
-    def energy(self) -> float:
-        """Current energy M(t)."""
-        return self._M
 
     @property
     def counts(self) -> np.ndarray:
@@ -137,18 +154,17 @@ class UCB(AgentBase):
     @property
     def means(self) -> np.ndarray:
         """Empirical mean reward per arm."""
-        with np.errstate(divide="ignore", invalid="ignore"):
-            means = self._sum_rwd / self._counts
-            means[self._counts == 0] = 0.0  # convention
-            return means
+        means = self._sum_rwd / self._counts
+        means[self._counts == 0] = 0.0  # convention
+        return means
 
     # ------------------------------------------------------------------
     # Utility
     # ------------------------------------------------------------------
 
     def __repr__(self) -> str:  # pragma: no cover – for debugging only
-        tag = "EA‑UCB" if self._ea else "UCB1"
+        tag = "EA‑UCB" if self.energy_adaptive else "UCB1"
         return (
-            f"<{tag}: c={self._c}, M={self._M:.3f}, counts={self._counts}, "
+            f"<{tag}: c={self._c}, M={self.energy:.3f}, counts={self._counts}, "
             f"means={self.means}>"
         )

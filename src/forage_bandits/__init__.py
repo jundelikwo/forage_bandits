@@ -10,7 +10,7 @@ __author__ = "Forage Bandits Contributors"
 
 # Core components
 from .environments import BanditEnvBase, make_env
-from .metrics import cumulative_regret, energy_trajectory, lifetime, hazard_curve, MetricsBatch
+from .metrics import cumulative_regret, energy_trajectory, predicted_lifetime, hazard_curve, MetricsBatch
 from .simulate import run_episode, run_batch, from_config, SimulationResult
 
 # Agent implementations
@@ -21,7 +21,7 @@ __all__ = [
     "make_env",
     "cumulative_regret",
     "energy_trajectory",
-    "lifetime",
+    "predicted_lifetime",
     "hazard_curve",
     "MetricsBatch",
     "run_episode",
