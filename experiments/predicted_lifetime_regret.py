@@ -153,7 +153,7 @@ def main(cfg: DictConfig) -> None:
     # Plot results
     # Create figure with 2x3 subplots
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    fig.suptitle('Effect of Number of Arms on Performance', fontsize=16)
+    fig.suptitle(f'Effect of Number of Arms on Performance: {cfg.env.name} environment', fontsize=16)
     
     # Set up x-axis values (number of arms)
     n_arms_range = list(range(2, 16))

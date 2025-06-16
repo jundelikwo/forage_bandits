@@ -44,7 +44,7 @@ def run_simulation(cfg: DictConfig, alg_name, energy_adaptive):
 def main(cfg: DictConfig) -> None:  # pragma: no cover
     log.info("Configuration:\n%s", OmegaConf.to_yaml(cfg))
     fig, axes = plt.subplots(4, 3, figsize=(18, 20), dpi=300)
-    fig.suptitle(f"n_arms={cfg.env.n_arms}", fontsize=22, fontweight="bold", y=0.99)
+    fig.suptitle(f"n_arms={cfg.env.n_arms}: {cfg.env.name} environment", fontsize=22, fontweight="bold", y=0.99)
 
 
     # ε-Greedy
