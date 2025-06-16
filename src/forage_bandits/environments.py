@@ -150,14 +150,9 @@ class SigmoidEnv:
         self.mu_opt = float(mu_opt)
 
         # Compute means once
-        # centre = (n_arms - 1) / 2.0
-        # self._means = np.array(
-        #     [1.0 / (1.0 + math.exp(-self.k * (i - centre))) for i in range(n_arms)],
-        #     dtype=np.float64,
-        # )
         self._means = np.array([
-            # self.mu_opt / (1 + math.exp(-self.k * (i/(n_arms-1) - 0.5))) # I'm not sure if it is supposed to be this way
-            self.mu_opt / (1 + math.exp(-self.k * ((i+1)/n_arms - 0.5)))
+            # self.mu_opt / (1 + math.exp(-self.k * ((i+1)/n_arms - 0.5)))
+            self.mu_opt / (1 + math.exp(-self.k * (i/(n_arms-1) - 0.5)))
             for i in range(n_arms)
         ], dtype=np.float64)
 

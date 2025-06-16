@@ -81,15 +81,14 @@ def run_simulation(
     
     return final_regret, final_regret_std, mean_lifetime, mean_lifetime_std
 
+# -----------------------------------------------------------------------------
+# Hydra entry‑point
+# -----------------------------------------------------------------------------
 
-def main() -> None:
-    """Run the experiment and save results."""
-    # Get the absolute path to the configs directory
-    config_dir = Path(__file__).parent.parent / "configs"
-    
-    # Load base config
-    with hydra.initialize_config_dir(config_dir=str(config_dir), version_base=None):
-        cfg = hydra.compose(config_name="base")
+@hydra.main(version_base=None, config_path="../configs", config_name="base")
+def main(cfg: DictConfig) -> None:
+    output_dir = Path("experiments/results")
+    output_dir.mkdir(exist_ok=True)
     
     # Initialize results dictionaries
     results = {
@@ -226,13 +225,10 @@ def main() -> None:
     
     # Adjust layout and save
     plt.tight_layout()
-    plt.savefig(f'experiments/results/predicted_lifetime_regret_{cfg.env.name}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir / f"predicted_lifetime_regret_{cfg.env.name}.png", dpi=300, bbox_inches='tight')
     plt.close()
     
     # Save results
-    output_dir = Path("experiments/results")
-    output_dir.mkdir(exist_ok=True)
-    
     with open(output_dir / f"predicted_lifetime_regret_{cfg.env.name}.json", "w") as f:
         json.dump(results, f, indent=2)
     
