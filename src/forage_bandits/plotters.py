@@ -209,6 +209,7 @@ def plot_lifetime_distribution(
     ax.set_xlabel("Lifetime")
     ax.set_ylabel("Frequency")
     ax.set_title("Lifetime Distribution")
+    ax.set_xlim(0, 50)
     
     # Add a horizontal line at y=0
     ax.axhline(y=0, color='black', linestyle='-', alpha=0.3)
