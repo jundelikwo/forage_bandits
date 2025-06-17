@@ -102,6 +102,8 @@ def plot_cumulative_regret(
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
+    energy_label: str | None = None,
+    energy_regret: np.ndarray | None = None,
     other_label: str | None = None,
     other_regret: np.ndarray | None = None,
     **line_kws,
@@ -109,6 +111,8 @@ def plot_cumulative_regret(
     """R(t) curve."""
     ax = _prepare_ax(ax)
     _plot_curve_with_sem(ax, regret, label=label, **line_kws)
+    if energy_regret is not None:
+        _plot_curve_with_sem(ax, energy_regret, label=energy_label, **line_kws)
     if other_regret is not None:
         _plot_curve_with_sem(ax, other_regret, label=other_label, **line_kws)
     ax.set_xlabel("Timestep $t$")
@@ -121,16 +125,20 @@ def plot_cumulative_regret(
 
 def plot_energy_trajectory(
     energy: np.ndarray,
-    other_energy: np.ndarray | None = None,
+    energy_energy: np.ndarray | None = None,
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
+    energy_label: str | None = None,
     other_label: str | None = None,
+    other_energy: np.ndarray | None = None,
     **line_kws,
 ) -> plt.Axes:
     """M(t) curve."""
     ax = _prepare_ax(ax)
     _plot_curve_with_sem(ax, energy, label=label, **line_kws)
+    if energy_energy is not None:
+        _plot_curve_with_sem(ax, energy_energy, label=energy_label, **line_kws)
     if other_energy is not None:
         _plot_curve_with_sem(ax, other_energy, label=other_label, **line_kws)
     ax.set_xlabel("Timestep $t$")
@@ -144,17 +152,21 @@ def plot_energy_trajectory(
 
 def plot_hazard_curve(
     hazard: np.ndarray,
-    other_hazard: np.ndarray | None = None,
+    energy_hazard: np.ndarray | None = None,
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
-    other_label: str | None = None,
+    energy_label: str | None = None,
     ylim: tuple[float, float] | None = (0.0, 1.05),
+    other_label: str | None = None,
+    other_hazard: np.ndarray | None = None,
     **line_kws,
 ) -> plt.Axes:
     """Hazard curve h(t)."""
     ax = _prepare_ax(ax)
     _plot_curve_with_sem(ax, hazard, label=label, **line_kws)
+    if energy_hazard is not None:
+        _plot_curve_with_sem(ax, energy_hazard, label=energy_label, **line_kws)
     if other_hazard is not None:
         _plot_curve_with_sem(ax, other_hazard, label=other_label, **line_kws)
     ax.set_xlabel("Timestep $t$")
@@ -169,12 +181,14 @@ def plot_hazard_curve(
 
 def plot_lifetime_distribution(
     lifetimes: np.ndarray,
-    other_lifetimes: np.ndarray | None = None,
+    energy_lifetimes: np.ndarray | None = None,
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
-    other_label: str | None = None,
+    energy_label: str | None = None,
     bins: int = 30,
+    other_label: str | None = None,
+    other_lifetimes: np.ndarray | None = None,
     **hist_kws,
 ) -> plt.Axes:
     """Plot distribution of predicted lifetimes."""
@@ -182,8 +196,8 @@ def plot_lifetime_distribution(
     
     # Get histogram data for both distributions
     hist1, bin_edges = np.histogram(lifetimes, bins=bins)
-    if other_lifetimes is not None:
-        hist2, _ = np.histogram(other_lifetimes, bins=bin_edges)
+    if energy_lifetimes is not None:
+        hist2, _ = np.histogram(energy_lifetimes, bins=bin_edges)
     else:
         hist2 = None
     
@@ -198,13 +212,19 @@ def plot_lifetime_distribution(
                label=f'Mean: {mean_lifetime:.1f}')
     
     # Plot second distribution (bottom half) if provided
-    if other_lifetimes is not None:
+    if energy_lifetimes is not None:
         # Invert the second histogram
-        ax.bar(bin_centers, -hist2, width=bin_width, label=other_label, alpha=0.7, **hist_kws)
-        other_mean_lifetime = np.mean(other_lifetimes)
-        ax.axvline(other_mean_lifetime, color='orange', linestyle='--', 
-                   label=f'Mean: {other_mean_lifetime:.1f}')
+        ax.bar(bin_centers, -hist2, width=bin_width, label=energy_label, alpha=0.7, **hist_kws)
+        energy_mean_lifetime = np.mean(energy_lifetimes)
+        ax.axvline(energy_mean_lifetime, color='orange', linestyle='--', 
+                   label=f'Mean: {energy_mean_lifetime:.1f}')
     
+    # Plot third distribution if provided
+    if other_lifetimes is not None:
+        ax.bar(bin_centers, hist2, width=bin_width, label=other_label, alpha=0.7, **hist_kws)
+        other_mean_lifetime = np.mean(other_lifetimes)
+        ax.axvline(other_mean_lifetime, color='green', linestyle='--', 
+                   label=f'Mean: {other_mean_lifetime:.1f}')
     # Customize plot
     ax.set_xlabel("Lifetime")
     ax.set_ylabel("Frequency")
@@ -215,7 +235,7 @@ def plot_lifetime_distribution(
     ax.axhline(y=0, color='black', linestyle='-', alpha=0.3)
     
     # Adjust y-axis limits to be symmetric and set custom tick labels
-    if other_lifetimes is not None:
+    if energy_lifetimes is not None:
         max_freq = max(np.max(hist1), np.max(hist2))
         ax.set_ylim(-max_freq * 1.1, max_freq * 1.1)
         
@@ -234,12 +254,14 @@ def plot_lifetime_distribution(
 
 def plot_exploration_rate(
     exploring: np.ndarray,
-    other_exploring: np.ndarray | None = None,
+    energy_exploring: np.ndarray | None = None,
     *,
     ax: Optional[plt.Axes] = None,
     label: str | None = None,
-    other_label: str | None = None,
+    energy_label: str | None = None,
     start_explore: bool = False,
+    other_label: str | None = None,
+    other_exploring: np.ndarray | None = None,
     **line_kws,
 ) -> plt.Axes:
     """Plot exploration rate over time."""
@@ -253,6 +275,10 @@ def plot_exploration_rate(
     # Plot mean exploration rate
     ax.plot(mean_explore, label=label, **line_kws)
 
+    if energy_exploring is not None:
+        energy_mean_explore = np.mean(energy_exploring, axis=0)
+        ax.plot(energy_mean_explore, label=energy_label, **line_kws)
+    
     if other_exploring is not None:
         other_mean_explore = np.mean(other_exploring, axis=0)
         ax.plot(other_mean_explore, label=other_label, **line_kws)
