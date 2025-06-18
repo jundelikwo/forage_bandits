@@ -16,6 +16,7 @@ def run_simulation(
     n_arms: int,
     alg_name: str,
     energy_adaptive: bool,
+    eta: float = 1.0,
 ) -> Tuple[float, float, float, float]:
     """Run a single simulation and return final regret and mean lifetime.
 
@@ -29,6 +30,8 @@ def run_simulation(
         Name of the algorithm ('egree', 'ucb', or 'ts')
     energy_adaptive
         Whether to use energy-adaptive version
+    eta
+        Exploration count offset
 
     Returns
     -------
@@ -50,6 +53,7 @@ def run_simulation(
     # Override algorithm config
     sim_cfg.alg.name = alg_name
     sim_cfg.alg.energy_adaptive = energy_adaptive
+    sim_cfg.alg.eta = eta
     
     # Run simulation
     result = from_config(sim_cfg)
@@ -66,14 +70,8 @@ def run_simulation(
     
     # Calculate mean lifetime and std
     if result.energy is not None:
-        lifetimes = []
-        for run in range(result.energy.shape[0]):
-            # energy = result.energy[run]
-            energy = energy_trajectory(result.rewards[run], Mf=0.1, M0=1.0)
-            hazard = hazard_curve(energy)
-            lifetime = predicted_lifetime(hazard)
-            lifetimes.append(lifetime)
-        lifetimes = np.array(lifetimes)
+        hazard = result.hazard
+        lifetimes = predicted_lifetime(hazard)
         mean_lifetime = float(np.mean(lifetimes))
         mean_lifetime_std = float(np.std(lifetimes))
     else:
@@ -107,14 +105,14 @@ def main(cfg: DictConfig) -> None:
         
         # ε-Greedy
         print("  ε-Greedy (no energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "egree", False)
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "egree", False, eta=0)
         results["e_greedy_no_energy"]["regret"][n_arms] = regret
         results["e_greedy_no_energy"]["regret_std"][n_arms] = regret_std
         results["e_greedy_no_energy"]["lifetime"][n_arms] = lifetime
         results["e_greedy_no_energy"]["lifetime_std"][n_arms] = lifetime_std
         
         print("  ε-Greedy (energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "egree", True)
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "egree", True, eta=1)
         results["e_greedy_energy"]["regret"][n_arms] = regret
         results["e_greedy_energy"]["regret_std"][n_arms] = regret_std
         results["e_greedy_energy"]["lifetime"][n_arms] = lifetime
@@ -122,14 +120,14 @@ def main(cfg: DictConfig) -> None:
         
         # UCB
         print("  UCB (no energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ucb", False)
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ucb", False, eta=0)
         results["ucb_no_energy"]["regret"][n_arms] = regret
         results["ucb_no_energy"]["regret_std"][n_arms] = regret_std
         results["ucb_no_energy"]["lifetime"][n_arms] = lifetime
         results["ucb_no_energy"]["lifetime_std"][n_arms] = lifetime_std
         
         print("  UCB (energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ucb", True)
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ucb", True, eta=1)
         results["ucb_energy"]["regret"][n_arms] = regret
         results["ucb_energy"]["regret_std"][n_arms] = regret_std
         results["ucb_energy"]["lifetime"][n_arms] = lifetime
@@ -137,14 +135,14 @@ def main(cfg: DictConfig) -> None:
         
         # Thompson Sampling
         print("  TS (no energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ts", False)
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ts", False, eta=0)
         results["ts_no_energy"]["regret"][n_arms] = regret
         results["ts_no_energy"]["regret_std"][n_arms] = regret_std
         results["ts_no_energy"]["lifetime"][n_arms] = lifetime
         results["ts_no_energy"]["lifetime_std"][n_arms] = lifetime_std
         
         print("  TS (energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ts", True)
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ts", True, eta=1)
         results["ts_energy"]["regret"][n_arms] = regret
         results["ts_energy"]["regret_std"][n_arms] = regret_std
         results["ts_energy"]["lifetime"][n_arms] = lifetime
