@@ -58,6 +58,8 @@ class ThompsonSampling(AgentBase):
         self,
         n_arms: int,
         *,
+        init_energy: float = 1.0,
+        Emax: float = 1.0,
         energy_adaptive: bool = False,
         forage_cost: float = 0.0,
         eta: int | float | None = None,
@@ -74,14 +76,19 @@ class ThompsonSampling(AgentBase):
         self._mu = np.zeros(n_arms, dtype=np.float64)  # μ̄ₐ
         # If eta not supplied, use baseline 0 or EA default 1
         if eta is None:
-            eta = 1
-        self._n = np.full(n_arms, eta, dtype=np.float64)  # nₐ (can be float)
+            eta = 1 if energy_adaptive else 1e-10
+        if eta == 0:
+            eta = 1e-10
+
+        self.eta: float = eta
+        self._n = np.zeros(n_arms, dtype=np.float64)  # nₐ (can be float)
         self._alpha = np.full(n_arms, alpha0, dtype=np.float64)
         self._beta = np.full(n_arms, beta0, dtype=np.float64)
 
         # Global time step & energy
         self._t = 0
-        self.energy: float = 1.0
+        self.energy: float = init_energy
+        self.Emax: float = Emax
 
         self._last_was_explore = False
 
@@ -90,13 +97,12 @@ class ThompsonSampling(AgentBase):
     # ------------------------------------------------------------------
     def act(self, t: int) -> int:  # noqa: D401
         """Sample NG posterior and return arm index with biggest sample."""
-        energy_factor = self.energy if self.energy_adaptive else 1.0
+        energy_factor = (self.energy / self.Emax) if self.energy_adaptive else 1.0
 
         # Draw from Gamma for each arm → tau (precision)
         tau = self._rng.gamma(shape=self._alpha, scale=1.0 / self._beta)
-        # Avoid division by zero when n=0
-        denom = np.where(self._n > 0, self._n, 1.0)
-        var = energy_factor / (denom * tau)
+
+        var = energy_factor / ((self._n + self.eta) * tau)
         sigma = np.sqrt(var)
         samples = self._rng.normal(loc=self._mu, scale=sigma)
         arm = int(np.argmax(samples))
@@ -118,7 +124,11 @@ class ThompsonSampling(AgentBase):
         self._alpha[arm] += 0.5
         self._beta[arm] += (reward * reward - mu_old * mu_old) / (2.0 * self._n[arm])
 
-        self.energy = float(np.clip(self.energy + reward - self.Mf, 0.0, 1.0))
+        # self.energy = float(np.clip(self.energy + reward - self.Mf, 0.0, 1.0))
+        energy = self.energy + max(0, reward) - self.Mf
+        energy = max(0, energy)
+        energy = min(self.Emax, energy)
+        self.energy = energy
 
         # Advance time
         self._t += 1

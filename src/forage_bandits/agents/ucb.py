@@ -64,27 +64,32 @@ class UCB(AgentBase):
         energy_adaptive: bool = False,
         forage_cost: float = 0.0,
         init_energy: float = 1.0,
+        Emax: float = 1.0,
         rng: Optional[np.random.Generator | int] = None,
         eta: int | float | None = None,
     ) -> None:
         super().__init__(n_arms)
 
-        if c <= 0:
-            raise ValueError("c must be positive")
-        if not 0.0 <= init_energy <= 1.0:
-            raise ValueError("init_energy must be in [0, 1]")
-        if not 0.0 <= forage_cost <= 1.0:
-            raise ValueError("forage_cost must be in [0, 1]")
+        # if c <= 0:
+        #     raise ValueError("c must be positive")
+        # if not 0.0 <= init_energy <= 1.0:
+        #     raise ValueError("init_energy must be in [0, 1]")
+        # if not 0.0 <= forage_cost <= 1.0:
+        #     raise ValueError("forage_cost must be in [0, 1]")
 
         self._c = float(c)
         self.energy_adaptive = bool(energy_adaptive)
         self._Mf = float(forage_cost)
         self.energy = float(init_energy)
-
+        self.Emax: float = Emax
+        
         # Statistics
         if eta is None:
-            eta = 1
-        self._counts = np.full(n_arms, eta, dtype=np.int64)
+            eta = 1 if energy_adaptive else 1e-10
+        if eta == 0:
+            eta = 1e-10
+        self.eta: float = eta
+        self._counts = np.zeros(n_arms, dtype=np.int64)
         self._sum_rwd = np.zeros(n_arms, dtype=np.float64)
 
         # RNG
@@ -126,8 +131,10 @@ class UCB(AgentBase):
         means = np.zeros_like(self._counts, dtype=float)
         np.divide(self._sum_rwd, self._counts, out=means, where=self._counts != 0)
         
-        c_eff = self._c * (self.energy if self.energy_adaptive else 1.0)
-        pads = c_eff * np.sqrt(2.0 * np.log(total_trials) / self._counts)
+        energy_factor = (self.energy / self.Emax) if self.energy_adaptive else 1.0
+        energy_factor = max(energy_factor, 0)
+        c_eff = self._c * energy_factor  # Scale by energy
+        pads = c_eff * np.sqrt((2 * np.log(total_trials)) / (self._counts + self.eta))
         
         ucb_values = means + pads
         
@@ -147,8 +154,13 @@ class UCB(AgentBase):
         self._sum_rwd[action] += reward
         
         # Energy update with clipping to [0, 1] (Eq. 4.1)
-        new_energy = self.energy + reward - self._Mf
-        self.energy = float(np.clip(new_energy, 0.0, 1.0))
+        # new_energy = self.energy + reward - self._Mf
+        # self.energy = float(np.clip(new_energy, 0.0, 1.0))
+
+        energy = self.energy + max(0, reward) - self._Mf
+        energy = max(0, energy)
+        energy = min(self.Emax, energy)
+        self.energy = energy
 
     @property
     def is_exploring(self) -> bool:

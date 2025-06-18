@@ -55,6 +55,7 @@ class EpsilonGreedy(AgentBase):
         *,
         energy_adaptive: bool = False,
         init_energy: float = 1.0,
+        Emax: float = 1.0,
         forage_cost: float = 0.0,
         rng: Optional[np.random.Generator] = None,
         eta: int | float | None = None,
@@ -62,12 +63,15 @@ class EpsilonGreedy(AgentBase):
         self.n_arms = n_arms
         self.epsilon = float(epsilon)
         self.energy_adaptive = energy_adaptive
+        self.Emax: float = Emax
 
         # Statistics
         if eta is None:
-            eta = 1
-            # eta = 1 if energy_adaptive else 0
-        self.counts = np.full(n_arms, eta, dtype=np.int64)
+            eta = 1 if energy_adaptive else 1e-10
+        if eta == 0:
+            eta = 1e-10
+        self.eta: float = eta
+        self.counts = np.zeros(n_arms, dtype=np.int64)
         self.values = np.zeros(n_arms, dtype=np.float64)  # empirical means μ̄_a
 
         # Energy bookkeeping
@@ -87,9 +91,13 @@ class EpsilonGreedy(AgentBase):
     def act(self, t: int) -> int:  # noqa: D401, ARG002  (t can be used if needed)
         """Choose an arm index for time‑step *t*."""
         # Effective exploration rate
-        eps_eff = (
-            self.epsilon * self.energy if self.energy_adaptive else self.epsilon
-        )
+        energy_factor = (self.energy / self.Emax) if self.energy_adaptive else 1.0
+        eps_eff = self.epsilon * energy_factor
+
+        if eps_eff < self.epsilon * 0.1:
+            eps_eff = self.epsilon * 0.1
+
+        
         if self._rng.random() < eps_eff:
             # Explore uniformly at random
             self._last_was_explore = True
@@ -108,7 +116,11 @@ class EpsilonGreedy(AgentBase):
         self.values[action] += (reward - self.values[action]) / n
 
         # Energy dynamics for EA variant
-        self.energy = float(np.clip(self.energy + reward - self.forage_cost, 0.0, 1.0))
+        # self.energy = float(np.clip(self.energy + reward - self.forage_cost, 0.0, 1.0))
+        energy = self.energy + max(0, reward) - self.forage_cost
+        energy = max(0, energy)
+        energy = min(self.Emax, energy)
+        self.energy = energy
 
     @property
     def is_exploring(self) -> bool:
