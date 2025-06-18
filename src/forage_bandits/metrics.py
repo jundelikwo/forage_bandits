@@ -53,11 +53,11 @@ def energy_trajectory(
     
     B, T = rewards.shape
     M = np.zeros((B, T))
-    M[:, 0] = np.clip(M0 + rewards[:, 0] - Mf, 0.0, 1.0)
+    M[:, 0] = np.clip(M0 + rewards[:, 0] - Mf, 0.0, C_M)
     
     # Sequential update with intermediate clipping
     for t in range(1, T):
-        M[:, t] = np.clip(M[:, t-1] + rewards[:, t] - Mf, 0.0, 1.0)
+        M[:, t] = np.clip(M[:, t-1] + rewards[:, t] - Mf, 0.0, C_M)
     
     return M[0] if orig_ndim == 1 else M
 
@@ -66,7 +66,8 @@ def hazard_curve(
     energy: np.ndarray,
 ) -> np.ndarray:
     """Hazard trajectory h(t) = exp(-c_m * M(t)) (Eq. 4.2)."""
-    return np.exp(-C_M * energy)
+    # return np.exp(-C_M * energy)
+    return np.maximum(1/L_STAR, np.exp(-energy))
 
 
 def predicted_lifetime(
@@ -109,7 +110,9 @@ def cumulative_regret(
     """Cumulative regret R(t) = Σ_{s=1}^t (μ* - r_s) (Eq. 4.6)."""
     rewards = np.asarray(rewards, dtype=np.float64)
     opt = np.asarray(optimal_mean, dtype=np.float64)
-    regret_step = opt - rewards
+    regret_step = (opt - rewards) / C_M
+    # return np.cumsum(regret_step, axis=-1)
+    # regret_step = np.maximum(optimal_mean - rewards, 0) / C_M  # Scale by Emax
     return np.cumsum(regret_step, axis=-1)
 
 

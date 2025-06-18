@@ -97,7 +97,8 @@ class SimulationResult:
         if self.rewards.ndim == 1:
             raise ValueError("hazard is defined only for batch runs (N>1)")
         if self._hazard is None:
-            energy = _m.energy_trajectory(self.rewards, Mf=0.1, M0=1.0)
+            # energy = _m.energy_trajectory(self.rewards, Mf=0.1, M0=1.0)
+            energy = _m.energy_trajectory(self.rewards, Mf=np.log(50)/10, M0=np.log(50))
             self._hazard = _m.hazard_curve(energy)
         return self._hazard
 
@@ -218,25 +219,31 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
     if name == "ucb" or name == "ea_ucb":
         return UCB(
             n_arms=n_arms,
+            init_energy=np.log(50),
+            Emax=np.log(50),
             c=float(getattr(cfg, "c", 1.0)),
             energy_adaptive=energy_adaptive,
-            forage_cost=float(getattr(cfg, "Mf", 0.05)),
+            forage_cost=np.log(50)/10,
             rng=agent_rng,
         )
     if name == "egree" or name == "ea_egree":
         return EpsilonGreedy(
             n_arms=n_arms,
+            init_energy=np.log(50),
+            Emax=np.log(50),
             epsilon=float(getattr(cfg, "epsilon", 0.1)),
             energy_adaptive=energy_adaptive,
-            forage_cost=float(getattr(cfg, "Mf", 0.05)),
+            forage_cost=np.log(50)/10,
             rng=agent_rng,
         )
     if name == "ts" or name == "ea_ts":
         return ThompsonSampling(
             n_arms=n_arms,
+            init_energy=np.log(50),
+            Emax=np.log(50),
             eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
-            forage_cost=float(getattr(cfg, "Mf", 0.05)),
+            forage_cost=np.log(50)/10,
             rng=agent_rng,
         )
     raise ValueError(f"Unknown agent name '{cfg.name}'.")
