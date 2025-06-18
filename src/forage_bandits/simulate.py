@@ -223,6 +223,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             Emax=np.log(50),
             c=float(getattr(cfg, "c", 1.0)),
             energy_adaptive=energy_adaptive,
+            eta=float(getattr(cfg, "eta", 1.0)),
             forage_cost=np.log(50)/10,
             rng=agent_rng,
         )
@@ -231,7 +232,8 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             n_arms=n_arms,
             init_energy=np.log(50),
             Emax=np.log(50),
-            epsilon=float(getattr(cfg, "epsilon", 0.1)),
+            epsilon=float(getattr(cfg, "epsilon", 0.2)),
+            eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
             forage_cost=np.log(50)/10,
             rng=agent_rng,
