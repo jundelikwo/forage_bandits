@@ -47,7 +47,7 @@ class BanditEnvBase(Protocol):
     n_arms: int
 
     def pull(self, arm: int) -> float:  # noqa: D401
-        """Sample a reward *r ∈ [0, 1]* for the given arm index."""
+        """Sample a reward *r ∈ [0, log(50)]* for the given arm index."""
 
     def true_means(self) -> np.ndarray:  # noqa: D401
         """Return the vector of mean rewards μ of shape (n_arms,)."""
@@ -62,7 +62,7 @@ class _GaussianArm:
     sigma: float = 0.1
 
     def sample(self, rng: np.random.Generator) -> float:  # noqa: D401
-        return float(np.clip(rng.normal(self.mean, self.sigma), 0.0, 1.0))
+        return float(np.maximum(0, rng.normal(self.mean, self.sigma)))
 
 
 class SingleOptimalEnv:
@@ -96,6 +96,12 @@ class SingleOptimalEnv:
     ) -> None:
         if n_arms < 2:
             raise ValueError("SingleOptimalEnv requires at least 2 arms.")
+        
+        Emax = np.log(50)
+        basal_cost = Emax / 10
+        mu_opt = 2 * basal_cost  # Optimal arm mean
+        mu_sub = 0.2 * mu_opt    # Suboptimal arm mean
+        sigma = 0.1
 
         self._rng = np.random.default_rng(rng)
         self.n_arms = int(n_arms)
@@ -148,6 +154,10 @@ class SigmoidEnv:
         self.k = float(k)
         self.sigma = float(sigma)
         self.mu_opt = float(mu_opt)
+        Emax = np.log(50)
+        basal_cost = Emax / 10
+        mu_opt = 2 * basal_cost  # Optimal arm mean
+        self.mu_opt = mu_opt
 
         # Compute means once
         self._means = np.array([
@@ -158,8 +168,13 @@ class SigmoidEnv:
 
     # ------------------------------------------------------------------
     def pull(self, arm: int) -> float:  # noqa: D401
-        mu = self._means[arm]
-        return float(np.clip(self._rng.normal(mu, self.sigma), 0.0, 1.0))
+        y = 1 / (1 + np.exp(-self.k * ((arm)/(self.n_arms - 1) - 0.5)))
+        reward = self._rng.normal(self.mu_opt * y, 0.1 * self.mu_opt)
+        return reward
+        # y = 1 / (1 + np.exp(-self.k * ((arm - 0.5)/self.n_arms - 0.5)))
+        # reward = self._rng.normal(self.mu_opt * y, 0.1 * self.mu_opt)
+        # return reward
+        # return float(np.clip(reward, 0.0, 1.0))
 
     def true_means(self) -> np.ndarray:  # noqa: D401
         return self._means.copy()
