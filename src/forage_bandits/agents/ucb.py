@@ -178,7 +178,7 @@ class UCB(AgentBase):
     @property
     def means(self) -> np.ndarray:
         """Empirical mean reward per arm."""
-        means = self._sum_rwd / self._counts
+        means = self._sum_rwd / (self._counts + self.eta)
         means[self._counts == 0] = 0.0  # convention
         return means
 

@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable, List, Optional, Protocol, Sequence, Tuple
 
 import numpy as np
+import concurrent.futures
 
 from . import metrics as _m
 from .environments import BanditEnvBase, make_env
@@ -150,6 +151,18 @@ def run_episode(
     )
 
 
+def _run_single_episode(
+    env_factory: Callable[[int], BanditEnvBase],
+    agent_factory: Callable[[int], _AgentProto],
+    seed: int,
+    T: int,
+) -> SimulationResult:
+    """Helper function for parallel processing of a single episode."""
+    env = env_factory(seed)
+    agent = agent_factory(seed)
+    return run_episode(env, agent, T)
+
+
 def run_batch(
     env_factory: Callable[[int], BanditEnvBase],
     agent_factory: Callable[[int], _AgentProto],
@@ -157,11 +170,7 @@ def run_batch(
     n_runs: int,
     seed: int | None = None,
 ) -> SimulationResult:
-    """Run *n_runs* episodes in an i.i.d. fashion.
-
-    Each run uses **independent** PRNG streams derived from *seed* to ensure
-    reproducibility while avoiding unwanted coupling across runs.
-    """
+    """Run *n_runs* episodes in parallel, each of length *T*."""
     if seed is None:
         seed = np.random.SeedSequence().entropy  # type: ignore[arg-type]
     ss = np.random.SeedSequence(int(seed))
@@ -170,15 +179,20 @@ def run_batch(
     # Preallocate
     rewards = np.empty((n_runs, T), dtype=float)
     actions = np.empty((n_runs, T), dtype=int)
-    energy = np.empty((n_runs, T), dtype=int)
-    exploring = np.empty((n_runs, T), dtype=int)
+    energy = np.empty((n_runs, T), dtype=float)
+    exploring = np.empty((n_runs, T), dtype=bool)
     opt_mean: float | None = None
 
-    for i in range(n_runs):
-        env = env_factory(child_seeds[i].generate_state(1)[0])
-        agent = agent_factory(child_seeds[i].generate_state(1)[0])
+    # Run episodes in parallel
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = [
+            executor.submit(_run_single_episode, env_factory, agent_factory, child_seeds[i].generate_state(1)[0], T)
+            for i in range(n_runs)
+        ]
+        results = [future.result() for future in concurrent.futures.as_completed(futures)]
 
-        res_i = run_episode(env, agent, T)
+    # Collect results
+    for i, res_i in enumerate(results):
         rewards[i] = res_i.rewards
         actions[i] = res_i.actions
         exploring[i] = res_i.exploring
@@ -251,6 +265,26 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
     raise ValueError(f"Unknown agent name '{cfg.name}'.")
 
 
+class EnvFactory:
+    """Picklable environment factory."""
+    def __init__(self, env_cfg):
+        self.env_cfg = env_cfg
+
+    def __call__(self, seed: int) -> BanditEnvBase:
+        return make_env(self.env_cfg, seed)
+
+
+class AgentFactory:
+    """Picklable agent factory."""
+    def __init__(self, env_cfg, alg_cfg):
+        self.env_cfg = env_cfg
+        self.alg_cfg = alg_cfg
+
+    def __call__(self, seed: int) -> _AgentProto:
+        env = make_env(self.env_cfg, seed)  # Need env for n_arms
+        return _make_agent_from_cfg(self.alg_cfg, env, seed)
+
+
 def from_config(cfg) -> SimulationResult:  # noqa: ANN001
     """Instantiate env & agent from a Hydra/OmegaConf‑style config.
 
@@ -270,13 +304,9 @@ def from_config(cfg) -> SimulationResult:  # noqa: ANN001
     T = int(getattr(cfg, "T", 1000))
     n_runs = int(getattr(cfg, "n_runs", 1))
 
-    # Create factory functions that use the config
-    def env_factory(seed: int) -> BanditEnvBase:
-        return make_env(cfg.env, seed)
-
-    def agent_factory(seed: int) -> _AgentProto:
-        env = env_factory(seed)  # Need env for n_arms
-        return _make_agent_from_cfg(cfg.alg, env, seed)
+    # Create factory instances
+    env_factory = EnvFactory(cfg.env)
+    agent_factory = AgentFactory(cfg.env, cfg.alg)
 
     if n_runs > 1:
         return run_batch(env_factory, agent_factory, T, n_runs, seed)
