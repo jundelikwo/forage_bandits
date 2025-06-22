@@ -69,10 +69,15 @@ python experiments/epsilon_check.py env.n_arms=12
 python experiments/epsilon_check.py env.n_arms=4 env=sigmoid
 python experiments/epsilon_check.py env.n_arms=12 env=sigmoid
 
-python experiments/ucb_c_check.py env.n_arms=4
-python experiments/ucb_c_check.py env.n_arms=12
-python experiments/ucb_c_check.py env.n_arms=4 env=sigmoid
-python experiments/ucb_c_check.py env.n_arms=12 env=sigmoid
+python experiments/ucb_c_check.py env.n_arms=4 alg=ucb
+python experiments/ucb_c_check.py env.n_arms=12 alg=ucb
+python experiments/ucb_c_check.py env.n_arms=4 alg=ucb env=sigmoid
+python experiments/ucb_c_check.py env.n_arms=12 alg=ucb env=sigmoid
+
+python experiments/initial_energy_check.py env.n_arms=4
+python experiments/initial_energy_check.py env.n_arms=12
+python experiments/initial_energy_check.py env.n_arms=4 env=sigmoid
+python experiments/initial_energy_check.py env.n_arms=12 env=sigmoid
 ```
 
 ## Configuration

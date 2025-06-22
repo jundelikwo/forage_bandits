@@ -4,3 +4,4 @@ eta: 1                     # pseudo-count for unseen arms
 energy_adaptive: false     # true = EA-UCB
 Mf: ${Mf}
 c: ${c}                    # exploration coefficient (will be set later)
+init_energy: ${init_energy} # initial energy of the agent
