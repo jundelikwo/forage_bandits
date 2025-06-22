@@ -63,6 +63,16 @@ python experiments/predicted_lifetime_regret_novel_arm_initialization.py
 python experiments/predicted_lifetime_regret_novel_arm_initialization.py env=sigmoid
 python experiments/pairwise_comparison_novel_arm_initialization.py env.n_arms=10
 python experiments/pairwise_comparison_novel_arm_initialization.py env.n_arms=10 env=sigmoid
+
+python experiments/epsilon_check.py env.n_arms=4
+python experiments/epsilon_check.py env.n_arms=12
+python experiments/epsilon_check.py env.n_arms=4 env=sigmoid
+python experiments/epsilon_check.py env.n_arms=12 env=sigmoid
+
+python experiments/ucb_c_check.py env.n_arms=4
+python experiments/ucb_c_check.py env.n_arms=12
+python experiments/ucb_c_check.py env.n_arms=4 env=sigmoid
+python experiments/ucb_c_check.py env.n_arms=12 env=sigmoid
 ```
 
 ## Configuration

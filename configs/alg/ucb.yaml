@@ -1,6 +1,6 @@
 # UCB1 & Energy-Adaptive UCB
 name: ucb
-c: 1.0                     # exploration constant
 eta: 1                     # pseudo-count for unseen arms
 energy_adaptive: false     # true = EA-UCB
 Mf: ${Mf}
+c: ${c}                    # exploration coefficient (will be set later)

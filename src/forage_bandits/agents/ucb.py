@@ -60,7 +60,7 @@ class UCB(AgentBase):
         self,
         n_arms: int,
         *,
-        c: float = 1.0,
+        c: float = np.sqrt(2),
         energy_adaptive: bool = False,
         forage_cost: float = 0.0,
         init_energy: float = 1.0,
@@ -134,7 +134,7 @@ class UCB(AgentBase):
         energy_factor = (self.energy / self.Emax) if self.energy_adaptive else 1.0
         energy_factor = max(energy_factor, 0)
         c_eff = self._c * energy_factor  # Scale by energy
-        pads = c_eff * np.sqrt((2 * np.log(total_trials)) / (self._counts + self.eta))
+        pads = c_eff * np.sqrt((np.log(total_trials)) / (self._counts + self.eta))
         
         ucb_values = means + pads
         
