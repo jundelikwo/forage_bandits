@@ -152,7 +152,7 @@ def main(cfg: DictConfig) -> None:
         epsilon_range,
         [no_energy['lifetime'][n] for n in epsilon_range],
         # yerr=[no_energy['lifetime_std'][n] for n in epsilon_range],
-        label='No Energy',
+        label='No Energy, eta=1',
         marker='x',
         capsize=5
     )
@@ -177,7 +177,7 @@ def main(cfg: DictConfig) -> None:
         epsilon_range,
         [no_energy['regret'][n] for n in epsilon_range],
         # yerr=[no_energy['regret_std'][n] for n in epsilon_range],
-        label='No Energy',
+        label='No Energy, eta=0',
         marker='o',
         capsize=5
     )
@@ -204,7 +204,7 @@ def main(cfg: DictConfig) -> None:
     )
     
     # Customize subplot
-    axes[0].set_xlabel('Number of Arms')
+    axes[0].set_xlabel('Epsilon')
     axes[0].set_ylabel('Mean Lifetime')
     axes[0].set_title(f'ε-Greedy')
     axes[0].grid(True, alpha=0.3)
