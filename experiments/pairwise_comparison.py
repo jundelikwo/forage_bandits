@@ -24,7 +24,7 @@ def run_simulation(cfg: DictConfig, alg_name, energy_adaptive, eta=1):
     # Create a copy of the config to modify
     sim_cfg = OmegaConf.create(cfg)
 
-    sim_cfg.alg.eta = eta
+    sim_cfg.alg.eta = eta if eta == 1 else 1e-10
 
     sim_cfg.alg.name = alg_name
     sim_cfg.alg.energy_adaptive = energy_adaptive

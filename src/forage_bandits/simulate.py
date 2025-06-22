@@ -233,34 +233,34 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
     if name == "ucb" or name == "ea_ucb":
         return UCB(
             n_arms=n_arms,
-            init_energy=np.log(50),
             Emax=np.log(50),
             c=float(getattr(cfg, "c", np.sqrt(2))),
             energy_adaptive=energy_adaptive,
             eta=float(getattr(cfg, "eta", 1.0)),
             forage_cost=np.log(50)/10,
             rng=agent_rng,
+            init_energy=float(getattr(cfg, "init_energy", np.log(50))),
         )
     if name == "egree" or name == "ea_egree":
         return EpsilonGreedy(
             n_arms=n_arms,
-            init_energy=np.log(50),
             Emax=np.log(50),
             epsilon=float(getattr(cfg, "epsilon", 0.2)),
             eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
             forage_cost=np.log(50)/10,
             rng=agent_rng,
+            init_energy=float(getattr(cfg, "init_energy", np.log(50))),
         )
     if name == "ts" or name == "ea_ts":
         return ThompsonSampling(
             n_arms=n_arms,
-            init_energy=np.log(50),
             Emax=np.log(50),
             eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
             forage_cost=np.log(50)/10,
             rng=agent_rng,
+            init_energy=float(getattr(cfg, "init_energy", np.log(50))),
         )
     raise ValueError(f"Unknown agent name '{cfg.name}'.")
 

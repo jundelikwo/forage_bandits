@@ -1,9 +1,0 @@
-defaults:
-  - env: single_optimal
-  - alg: ucb
-
-alg:
-  energy_adaptive: true
-
-matrix:
-  env.K: [4, 8, 12, 16]
