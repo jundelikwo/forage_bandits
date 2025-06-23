@@ -130,7 +130,7 @@ def main(cfg: DictConfig) -> None:
     # Plot results
     # Create figure with 2 subplots
     fig, axes = plt.subplots(2, figsize=(15, 10))
-    fig.suptitle(f'Effect of Epsilon on Performance: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
+    fig.suptitle(f'Effect of varying Epsilon on Performance of ε-Greedy agent: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
 
     # Plot lifetime (top row)
     ax = axes[0]

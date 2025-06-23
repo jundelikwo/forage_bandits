@@ -92,7 +92,8 @@ def main(cfg: DictConfig) -> None:
     print(f"cfg: {cfg}")
     
     # Set up x-axis values (number of arms)
-    init_energy_range = np.linspace(0, np.log(50), 50)
+    Emax = np.log(50)
+    init_energy_range = np.linspace(0, Emax, 50)
 
     # Initialize results dictionaries
     results = {
@@ -178,7 +179,7 @@ def main(cfg: DictConfig) -> None:
     # Plot results
     # Create figure with 2 subplots
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    fig.suptitle(f'Effect of Initial Energy on Performance: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
+    fig.suptitle(f'Effect of varying Initial Energy on Performance of ε-Greedy, UCB, and TS agents: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
 
 
     for col, alg in enumerate(['e_greedy', 'ucb', 'ts']):
@@ -187,7 +188,7 @@ def main(cfg: DictConfig) -> None:
         # Plot no energy version
         no_energy = results[f"{alg}_no_energy"]
         ax.errorbar(
-            init_energy_range,
+            init_energy_range/Emax,
             [no_energy['lifetime'][n] for n in init_energy_range],
             # yerr=[no_energy['lifetime_std'][n] for n in n_arms_range],
             label='No Energy, eta=0',
@@ -197,7 +198,7 @@ def main(cfg: DictConfig) -> None:
 
         no_energy = results[f"{alg}_no_energy_eta_1"]
         ax.errorbar(
-            init_energy_range,
+            init_energy_range/Emax,
             [no_energy['lifetime'][n] for n in init_energy_range],
             # yerr=[no_energy['lifetime_std'][n] for n in epsilon_range],
             label='No Energy, eta=1',
@@ -208,7 +209,7 @@ def main(cfg: DictConfig) -> None:
         # Plot energy version
         energy = results[f"{alg}_energy"]
         ax.errorbar(
-            init_energy_range,
+            init_energy_range/Emax,
             [energy['lifetime'][n] for n in init_energy_range],
             # yerr=[energy['lifetime_std'][n] for n in n_arms_range],
             label='Energy',
@@ -228,7 +229,7 @@ def main(cfg: DictConfig) -> None:
         # Plot no energy version
         no_energy = results[f"{alg}_no_energy"]
         ax.errorbar(
-            init_energy_range,
+            init_energy_range/Emax,
             [no_energy['regret'][n] for n in init_energy_range],
             # yerr=[no_energy['lifetime_std'][n] for n in n_arms_range],
             label='No Energy, eta=0',
@@ -238,7 +239,7 @@ def main(cfg: DictConfig) -> None:
 
         no_energy = results[f"{alg}_no_energy_eta_1"]
         ax.errorbar(
-            init_energy_range,
+            init_energy_range/Emax,
             [no_energy['regret'][n] for n in init_energy_range],
             # yerr=[no_energy['lifetime_std'][n] for n in epsilon_range],
             label='No Energy, eta=1',
@@ -249,7 +250,7 @@ def main(cfg: DictConfig) -> None:
         # Plot energy version
         energy = results[f"{alg}_energy"]
         ax.errorbar(
-            init_energy_range,
+            init_energy_range/Emax,
             [energy['regret'][n] for n in init_energy_range],
             # yerr=[energy['lifetime_std'][n] for n in n_arms_range],
             label='Energy',

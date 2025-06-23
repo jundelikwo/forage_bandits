@@ -128,7 +128,7 @@ def main(cfg: DictConfig) -> None:
     # Plot results
     # Create figure with 2 subplots
     fig, axes = plt.subplots(2, figsize=(15, 10))
-    fig.suptitle(f'Effect of Epsilon on Performance: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
+    fig.suptitle(f'Effect of varying c on Performance of UCB agent: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
 
     # Plot lifetime (top row)
     ax = axes[0]
@@ -202,7 +202,7 @@ def main(cfg: DictConfig) -> None:
     )
     
     # Customize subplot
-    axes[0].set_xlabel('Number of Arms')
+    axes[0].set_xlabel('c')
     axes[0].set_ylabel('Mean Lifetime')
     axes[0].set_title(f'UCB')
     axes[0].grid(True, alpha=0.3)
