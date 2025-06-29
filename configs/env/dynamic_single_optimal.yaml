@@ -4,3 +4,4 @@ n_arms: 4             # number of arms
 mu_opt: 0.2       # mean of the single best arm
 mu_sub: 0.04    # mean of every other arm
 sigma: 0.02       # shared Gaussian noise std-dev
+change_interval: 20 # number of time steps before changing the optimal arm

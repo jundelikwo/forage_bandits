@@ -208,6 +208,7 @@ class DynamicSingleOptimalEnv:
         mu_opt: float = 0.2,
         mu_sub: float = 0.04,
         sigma: float = 0.02,
+        change_interval: 20,
         opt_index: int | None = None,
         rng: Union[int, np.random.Generator, None] = None,
     ) -> None:
@@ -226,7 +227,7 @@ class DynamicSingleOptimalEnv:
         
         # Track number of pulls for dynamic changes
         self.pull_count = 0
-        self.change_interval = 20
+        self.change_interval = change_interval
 
         self._update_arms()
 
