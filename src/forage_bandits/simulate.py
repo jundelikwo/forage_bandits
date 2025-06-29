@@ -35,7 +35,7 @@ import concurrent.futures
 
 from . import metrics as _m
 from .environments import BanditEnvBase, make_env
-from .agents import EpsilonGreedy, UCB, ThompsonSampling
+from .agents import EpsilonGreedy, UCB, ThompsonSampling, DiscountedUCB, DiscountedEpsilonGreedy, DiscountedThompsonSampling
 
 __all__ = [
     "SimulationResult",
@@ -256,6 +256,41 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
         return ThompsonSampling(
             n_arms=n_arms,
             Emax=np.log(50),
+            eta=float(getattr(cfg, "eta", 1.0)),
+            energy_adaptive=energy_adaptive,
+            forage_cost=np.log(50)/10,
+            rng=agent_rng,
+            init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+        )
+    if name == "discounteducb":
+        return DiscountedUCB(
+            n_arms=n_arms,
+            Emax=np.log(50),
+            alpha=float(getattr(cfg, "alpha", 1.0)),
+            gamma=float(getattr(cfg, "gamma", 0.5)),
+            energy_adaptive=energy_adaptive,
+            eta=float(getattr(cfg, "eta", 1.0)),
+            forage_cost=np.log(50)/10, 
+            rng=agent_rng,
+            init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+        )
+    if name == "discountedegree":
+        return DiscountedEpsilonGreedy(
+            n_arms=n_arms,
+            Emax=np.log(50),
+            gamma=float(getattr(cfg, "gamma", 0.5)),
+            epsilon=float(getattr(cfg, "epsilon", 0.2)),
+            eta=float(getattr(cfg, "eta", 1.0)),
+            energy_adaptive=energy_adaptive,
+            forage_cost=np.log(50)/10,
+            rng=agent_rng,
+            init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+        )
+    if name == "discountedts":
+        return DiscountedThompsonSampling(
+            n_arms=n_arms,
+            Emax=np.log(50),
+            gamma=float(getattr(cfg, "gamma", 0.5)),
             eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
             forage_cost=np.log(50)/10,

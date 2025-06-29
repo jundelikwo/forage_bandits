@@ -1,0 +1,8 @@
+# Discounted ε-Greedy (baseline) and Energy-Adaptive Discounted ε-Greedy
+name: discountedegree
+gamma: 0.5
+epsilon: 0.2
+eta: 1                     # pseudo-count for unseen arms
+energy_adaptive: false     # set to true for EA-ε-Greedy
+Mf: ${Mf}                  # inherit global forage-cost
+init_energy: 3.912023005428146 # initial energy of the agent

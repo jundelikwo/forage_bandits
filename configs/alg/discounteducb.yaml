@@ -1,0 +1,9 @@
+# Discounted UCB
+name: discounteducb
+alpha: 1.0
+gamma: 0.5
+eta: 1                     # pseudo-count for unseen arms
+energy_adaptive: false     # true = EA-UCB
+Mf: ${Mf}
+c: ${c}                    # exploration coefficient (will be set later)
+init_energy: 3.912023005428146 # initial energy of the agent
