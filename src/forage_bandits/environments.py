@@ -37,6 +37,8 @@ __all__ = [
     "BanditEnvBase",
     "SingleOptimalEnv",
     "SigmoidEnv",
+    "DynamicSingleOptimalEnv",
+    "PoissonDynamicSingleOptimalEnv",
     "make_env",
 ]
 
@@ -264,12 +266,122 @@ class DynamicSingleOptimalEnv:
         return self._arms[self.opt_index].mean
 
 
+class PoissonDynamicSingleOptimalEnv:
+    """K‑armed bandit with a single best arm that changes based on Poisson distribution.
+
+    At each timestep, the environment samples from a Poisson distribution with parameter
+    lambda to determine if the optimal arm should change. This creates a more realistic
+    non-deterministic change pattern compared to fixed intervals.
+
+    Parameters
+    ----------
+    n_arms : int
+        Number of arms (*K* in the thesis).
+    mu_opt : float, default 1.0
+        Mean reward of the optimal arm.
+    mu_sub : float, default 0.0
+        Mean reward of all sub‑optimal arms.
+    sigma  : float, default 0.1
+        Shared standard deviation for Gaussian noise.
+    opt_index : int | None
+        Which arm is optimal initially. If *None* (default) a random index is chosen.
+    poisson_lambda : float, default 0.05
+        Lambda parameter for the Poisson distribution. This controls the expected
+        frequency of optimal arm changes. Higher values mean more frequent changes.
+        The probability of changing at any given timestep is approximately lambda.
+    rng : int | np.random.Generator | None
+        Seed or Generator for reproducibility.
+    """
+
+    def __init__(
+        self,
+        n_arms: int,
+        *,
+        mu_opt: float = 0.2,
+        mu_sub: float = 0.04,
+        sigma: float = 0.02,
+        opt_index: int | None = None,
+        poisson_lambda: float = 0.05,
+        rng: Union[int, np.random.Generator, None] = None,
+    ) -> None:
+        if n_arms < 2:
+            raise ValueError("PoissonDynamicSingleOptimalEnv requires at least 2 arms.")
+        
+        # Validate Poisson lambda parameter
+        if poisson_lambda <= 0:
+            raise ValueError("poisson_lambda must be positive")
+        
+        Emax = np.log(50)
+        basal_cost = Emax / 10
+        self.mu_opt = 2 * basal_cost  # Optimal arm mean
+        self.mu_sub = 0.2 * self.mu_opt    # Suboptimal arm mean
+        self.sigma = 0.1
+
+        self._rng = np.random.default_rng(rng)
+        self.n_arms = int(n_arms)
+        self.opt_index = n_arms - 1 if opt_index is None else int(opt_index)
+        
+        # Poisson distribution parameters
+        self.poisson_lambda = float(poisson_lambda)  # Expected change frequency
+        self.poisson_distribution = self._rng.poisson  # Poisson distribution function
+
+        self._update_arms()
+
+    def _update_arms(self):
+        """Update the arms based on current optimal index."""
+        self._arms = [
+            _GaussianArm(self.mu_opt if i == self.opt_index else self.mu_sub, self.sigma) 
+            for i in range(self.n_arms)
+        ]
+
+    def _change_optimal_arm(self):
+        """Change the optimal arm to a random new one."""
+        old_opt = self.opt_index
+        while self.opt_index == old_opt:  # Ensure we pick a different arm
+            self.opt_index = self._rng.integers(0, self.n_arms)
+        self._update_arms()
+
+    def _should_change_arm(self) -> bool:
+        """Determine if the optimal arm should change based on Poisson distribution.
+        
+        Returns
+        -------
+        bool
+            True if the optimal arm should change, False otherwise.
+        """
+        # Sample from Poisson distribution with parameter lambda
+        # If the sample is >= 1, we change the arm
+        # This gives us approximately lambda probability of changing per timestep
+        return self.poisson_distribution(self.poisson_lambda) >= 1
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+    def pull(self, arm: int) -> float:  # noqa: D401
+        # Check if we need to change the optimal arm based on Poisson distribution
+        if self._should_change_arm():
+            self._change_optimal_arm()
+        
+        return self._arms[arm].sample(self._rng)
+
+    # ------------------------------------------------------------------
+    def true_means(self) -> np.ndarray:  # noqa: D401
+        return np.array([arm.mean for arm in self._arms], dtype=np.float64)
+
+    # ------------------------------------------------------------------
+    # Extras
+    # ------------------------------------------------------------------
+    def optimal_mean(self) -> float:  # noqa: D401
+        return self._arms[self.opt_index].mean
+
+
 # ---------------------------------------------------------------------------
 # Factory helper
 # ---------------------------------------------------------------------------
 _ENV_REGISTRY = {
     "single_optimal": SingleOptimalEnv,
     "dynamic_single_optimal": DynamicSingleOptimalEnv,
+    "poisson_dynamic_single_optimal": PoissonDynamicSingleOptimalEnv,
     "sigmoid": SigmoidEnv,
 }
 
@@ -281,7 +393,7 @@ def make_env(cfg: Union[str, DictConfig, Dict[str, Any]], seed: int | None = Non
     ----------
     cfg : str | DictConfig | Dict[str, Any]
         Either a string name of the environment, or a config object/dict with
-        environment parameters. If a string, must be one of: single_optimal, dynamic_single_optimal, sigmoid.
+        environment parameters. If a string, must be one of: single_optimal, dynamic_single_optimal, poisson_dynamic_single_optimal, sigmoid.
     seed : int | None, optional
         Random seed for reproducibility. If None, a random seed is used.
         

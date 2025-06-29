@@ -78,6 +78,14 @@ python experiments/initial_energy_check.py env.n_arms=4
 python experiments/initial_energy_check.py env.n_arms=12
 python experiments/initial_energy_check.py env.n_arms=4 env=sigmoid
 python experiments/initial_energy_check.py env.n_arms=12 env=sigmoid
+
+python experiments/optimal_epsilon_per_arms.py
+python experiments/optimal_epsilon_per_arms.py env=sigmoid
+
+python experiments/pairwise_comparison.py env.n_arms=2 env=dynamic_single_optimal
+python experiments/pairwise_comparison.py env.n_arms=2 env=dynamic_single_optimal discounted_agents=true
+python experiments/pairwise_comparison.py env.n_arms=2 env=poisson_dynamic_single_optimal
+python experiments/pairwise_comparison.py env.n_arms=2 env=poisson_dynamic_single_optimal discounted_agents=true
 ```
 
 ## Configuration
