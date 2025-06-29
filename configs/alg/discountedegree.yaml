@@ -1,6 +1,6 @@
 # Discounted ε-Greedy (baseline) and Energy-Adaptive Discounted ε-Greedy
 name: discountedegree
-gamma: 0.5
+gamma: 0.85
 epsilon: 0.2
 eta: 1                     # pseudo-count for unseen arms
 energy_adaptive: false     # set to true for EA-ε-Greedy

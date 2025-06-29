@@ -84,8 +84,12 @@ python experiments/optimal_epsilon_per_arms.py env=sigmoid
 
 python experiments/pairwise_comparison.py env.n_arms=2 env=dynamic_single_optimal
 python experiments/pairwise_comparison.py env.n_arms=2 env=dynamic_single_optimal discounted_agents=true
+python experiments/pairwise_comparison.py env.n_arms=4 env=dynamic_single_optimal
+python experiments/pairwise_comparison.py env.n_arms=4 env=dynamic_single_optimal discounted_agents=true
 python experiments/pairwise_comparison.py env.n_arms=2 env=poisson_dynamic_single_optimal
 python experiments/pairwise_comparison.py env.n_arms=2 env=poisson_dynamic_single_optimal discounted_agents=true
+python experiments/pairwise_comparison.py env.n_arms=4 env=poisson_dynamic_single_optimal
+python experiments/pairwise_comparison.py env.n_arms=4 env=poisson_dynamic_single_optimal discounted_agents=true
 ```
 
 ## Configuration

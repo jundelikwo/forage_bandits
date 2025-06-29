@@ -32,7 +32,7 @@ class DiscountedUCB(AgentBase):
     n_arms:
         Total number of arms.
     gamma:
-        Discount factor γ ∈ (0,1]. Default 0.5.
+        Discount factor γ ∈ (0,1]. Default 0.85.
     alpha:
         Tuning constant α > 0. Default 1.0.
     energy_adaptive:
@@ -53,7 +53,7 @@ class DiscountedUCB(AgentBase):
         self,
         n_arms: int,
         *,
-        gamma: float = 0.5,
+        gamma: float = 0.85,
         alpha: float = 1.0,
         energy_adaptive: bool = False,
         forage_cost: float = 0.0,
@@ -69,7 +69,7 @@ class DiscountedUCB(AgentBase):
         if alpha <= 0:
             raise ValueError("alpha must be positive")
 
-        self.gamma = float(0.85)
+        self.gamma = float(gamma)
         self.alpha = float(alpha)
         self.energy_adaptive = bool(energy_adaptive)
         self._Mf = float(forage_cost)

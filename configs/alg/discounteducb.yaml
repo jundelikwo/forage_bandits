@@ -1,7 +1,7 @@
 # Discounted UCB
 name: discounteducb
 alpha: 1.0
-gamma: 0.5
+gamma: 0.85
 eta: 1                     # pseudo-count for unseen arms
 energy_adaptive: false     # true = EA-UCB
 Mf: ${Mf}

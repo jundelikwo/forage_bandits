@@ -1,6 +1,6 @@
 # Discounted Thompson Sampling & Energy-Adaptive Discounted TS
 name: discountedts
-gamma: 0.5
+gamma: 0.85
 eta: 1                     # pseudo-count for unseen arms
 energy_adaptive: false     # true = EA-TS
 Mf: ${Mf}

@@ -61,7 +61,7 @@ class DiscountedThompsonSampling(AgentBase):
         self,
         n_arms: int,
         *,
-        gamma: float = 0.5,
+        gamma: float = 0.85,
         init_energy: float = 1.0,
         Emax: float = 1.0,
         energy_adaptive: bool = False,
@@ -76,7 +76,7 @@ class DiscountedThompsonSampling(AgentBase):
         if not 0.0 < gamma <= 1.0:
             raise ValueError("gamma must be in (0, 1]")
             
-        self.gamma = float(0.85)
+        self.gamma = float(gamma)
         self.energy_adaptive = bool(energy_adaptive)
         self.Mf = float(forage_cost)
         self._rng = np.random.default_rng(rng)

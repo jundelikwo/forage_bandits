@@ -60,7 +60,7 @@ class DiscountedEpsilonGreedy(AgentBase):
         n_arms: int,
         epsilon: float = 0.2,
         *,
-        gamma: float = 0.5,
+        gamma: float = 0.85,
         energy_adaptive: bool = False,
         init_energy: float = 1.0,
         Emax: float = 1.0,
@@ -73,7 +73,7 @@ class DiscountedEpsilonGreedy(AgentBase):
             
         self.n_arms = n_arms
         self.epsilon = float(epsilon)
-        self.gamma = float(0.85)
+        self.gamma = float(gamma)
         self.energy_adaptive = energy_adaptive
         self.Emax: float = Emax
 

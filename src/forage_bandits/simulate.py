@@ -267,7 +267,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             n_arms=n_arms,
             Emax=np.log(50),
             alpha=float(getattr(cfg, "alpha", 1.0)),
-            gamma=float(getattr(cfg, "gamma", 0.5)),
+            gamma=float(getattr(cfg, "gamma", 0.85)),
             energy_adaptive=energy_adaptive,
             eta=float(getattr(cfg, "eta", 1.0)),
             forage_cost=np.log(50)/10, 
@@ -278,7 +278,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
         return DiscountedEpsilonGreedy(
             n_arms=n_arms,
             Emax=np.log(50),
-            gamma=float(getattr(cfg, "gamma", 0.5)),
+            gamma=float(getattr(cfg, "gamma", 0.85)),
             epsilon=float(getattr(cfg, "epsilon", 0.2)),
             eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
@@ -290,7 +290,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
         return DiscountedThompsonSampling(
             n_arms=n_arms,
             Emax=np.log(50),
-            gamma=float(getattr(cfg, "gamma", 0.5)),
+            gamma=float(getattr(cfg, "gamma", 0.85)),
             eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
             forage_cost=np.log(50)/10,
