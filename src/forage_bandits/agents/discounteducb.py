@@ -132,9 +132,17 @@ class DiscountedUCB(AgentBase):
         
         ucb_values = means + exploration_term
         
+        # Handle numerical issues: replace NaN and inf with finite values
+        ucb_values = np.nan_to_num(ucb_values, nan=0.0, posinf=1e6, neginf=-1e6)
+        
         # Break ties randomly among best options
         best_arms = np.flatnonzero(ucb_values == ucb_values.max())
-        arm = int(self.rng.choice(best_arms))
+        
+        # Safety check: if best_arms is empty, choose randomly
+        if len(best_arms) == 0:
+            arm = int(self.rng.integers(0, self.n_actions))
+        else:
+            arm = int(self.rng.choice(best_arms))
 
         # Check if selection was exploratory
         empirical_best = np.argmax(means)

@@ -121,6 +121,11 @@ class DiscountedEpsilonGreedy(AgentBase):
         self._last_was_explore = False
         best_value = self.values.max()
         best_arms = np.flatnonzero(np.isclose(self.values, best_value))
+        
+        # Safety check: if best_arms is empty, choose randomly
+        if len(best_arms) == 0:
+            return int(self._rng.integers(self.n_arms))
+        
         return int(self._rng.choice(best_arms))
 
     def update(self, action: int, reward: float) -> None:

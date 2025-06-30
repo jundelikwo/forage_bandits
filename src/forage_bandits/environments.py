@@ -195,6 +195,8 @@ class DynamicSingleOptimalEnv:
         Mean reward of all sub‑optimal arms.
     sigma  : float, default 0.1
         Shared standard deviation for Gaussian noise.
+    change_interval : int
+        The number of time steps before changing the optimal arm
     opt_index : int | None
         Which arm is optimal initially. If *None* (default) a random index is chosen.
     rng : int | np.random.Generator | None
