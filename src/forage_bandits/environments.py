@@ -95,6 +95,7 @@ class SingleOptimalEnv:
         sigma: float = 0.02,
         opt_index: int | None = None,
         rng: Union[int, np.random.Generator, None] = None,
+        **kwargs,
     ) -> None:
         if n_arms < 2:
             raise ValueError("SingleOptimalEnv requires at least 2 arms.")
@@ -150,6 +151,7 @@ class SigmoidEnv:
         k: float = 10.0,
         sigma: float = 0.02,
         rng: Union[int, np.random.Generator, None] = None,
+        **kwargs,
     ) -> None:
         self._rng = np.random.default_rng(rng)
         self.n_arms = int(n_arms)
@@ -210,9 +212,10 @@ class DynamicSingleOptimalEnv:
         mu_opt: float = 0.2,
         mu_sub: float = 0.04,
         sigma: float = 0.02,
-        change_interval: 20,
+        change_interval: int = 20,
         opt_index: int | None = None,
         rng: Union[int, np.random.Generator, None] = None,
+        **kwargs,
     ) -> None:
         if n_arms < 2:
             raise ValueError("SingleOptimalEnv requires at least 2 arms.")
@@ -306,6 +309,7 @@ class PoissonDynamicSingleOptimalEnv:
         opt_index: int | None = None,
         poisson_lambda: float = 0.05,
         rng: Union[int, np.random.Generator, None] = None,
+        **kwargs,
     ) -> None:
         if n_arms < 2:
             raise ValueError("PoissonDynamicSingleOptimalEnv requires at least 2 arms.")
