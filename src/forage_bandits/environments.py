@@ -39,6 +39,7 @@ __all__ = [
     "SigmoidEnv",
     "DynamicSingleOptimalEnv",
     "PoissonDynamicSingleOptimalEnv",
+    "DynamicSigmoidEnv",
     "make_env",
 ]
 
@@ -173,6 +174,66 @@ class SigmoidEnv:
     def pull(self, arm: int) -> float:  # noqa: D401
         reward = self._rng.normal(self._means[arm], 0.1 * self.mu_opt)
         return reward
+
+    def true_means(self) -> np.ndarray:  # noqa: D401
+        return self._means.copy()
+
+
+class DynamicSigmoidEnv:
+    """K‑armed bandit where μ_i follows a sigmoid curve.
+
+    Mean reward of arm *i* (0‑based) is
+
+        μ_i = 1 / (1 + exp(-k (i - i₀)))                          (Eq. 4.17)
+
+    with steepness *k* and centre *i₀ = (K − 1)/2* by default.
+    Rewards are Gaussian around μ_i with std *sigma*.
+    """
+
+    def __init__(
+        self,
+        n_arms: int,
+        *,
+        mu_opt: float = 0.2,
+        k: float = 10.0,
+        sigma: float = 0.02,
+        change_interval: int = 20,
+        rng: Union[int, np.random.Generator, None] = None,
+        **kwargs,
+    ) -> None:
+        self._rng = np.random.default_rng(rng)
+        self.n_arms = int(n_arms)
+        self.k = float(k)
+        self.sigma = float(sigma)
+        self.mu_opt = float(mu_opt)
+        Emax = np.log(50)
+        basal_cost = Emax / 10
+        mu_opt = 2 * basal_cost  # Optimal arm mean
+        self.mu_opt = mu_opt
+        
+        # Track number of pulls for dynamic changes
+        self.pull_count = 0
+        self.change_interval = change_interval
+
+        # Compute means once
+        self._means = np.array([
+            self.mu_opt / (1 + np.exp(-self.k * (i/(n_arms-1) - 0.5)))
+            for i in range(n_arms)
+        ], dtype=np.float64)
+
+    # ------------------------------------------------------------------
+    def pull(self, arm: int) -> float:  # noqa: D401
+        # Check if we need to change the optimal arm
+        self.pull_count += 1
+        if self.pull_count % self.change_interval == 0:
+            self._change_optimal_arm()
+
+        reward = self._rng.normal(self._means[arm], 0.1 * self.mu_opt)
+        return reward
+    
+    def _change_optimal_arm(self):
+        """Change the optimal arm to a random new one."""
+        self._rng.shuffle(self._means)
 
     def true_means(self) -> np.ndarray:  # noqa: D401
         return self._means.copy()
@@ -384,6 +445,7 @@ _ENV_REGISTRY = {
     "dynamic_single_optimal": DynamicSingleOptimalEnv,
     "poisson_dynamic_single_optimal": PoissonDynamicSingleOptimalEnv,
     "sigmoid": SigmoidEnv,
+    "dynamic_sigmoid": DynamicSigmoidEnv,
 }
 
 

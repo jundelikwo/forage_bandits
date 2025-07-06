@@ -1,0 +1,6 @@
+name: dynamic_sigmoid
+n_arms: 10
+mu_opt: 0.2
+k: 10.0
+sigma: 0.02
+change_interval: 20
