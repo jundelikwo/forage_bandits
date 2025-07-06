@@ -165,20 +165,14 @@ class SigmoidEnv:
 
         # Compute means once
         self._means = np.array([
-            # self.mu_opt / (1 + math.exp(-self.k * ((i+1)/n_arms - 0.5)))
-            self.mu_opt / (1 + math.exp(-self.k * (i/(n_arms-1) - 0.5)))
+            self.mu_opt / (1 + np.exp(-self.k * (i/(n_arms-1) - 0.5)))
             for i in range(n_arms)
         ], dtype=np.float64)
 
     # ------------------------------------------------------------------
     def pull(self, arm: int) -> float:  # noqa: D401
-        y = 1 / (1 + np.exp(-self.k * ((arm)/(self.n_arms - 1) - 0.5)))
-        reward = self._rng.normal(self.mu_opt * y, 0.1 * self.mu_opt)
+        reward = self._rng.normal(self._means[arm], 0.1 * self.mu_opt)
         return reward
-        # y = 1 / (1 + np.exp(-self.k * ((arm - 0.5)/self.n_arms - 0.5)))
-        # reward = self._rng.normal(self.mu_opt * y, 0.1 * self.mu_opt)
-        # return reward
-        # return float(np.clip(reward, 0.0, 1.0))
 
     def true_means(self) -> np.ndarray:  # noqa: D401
         return self._means.copy()
