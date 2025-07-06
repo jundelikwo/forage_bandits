@@ -14,7 +14,6 @@ discounted_agents: false
 # Episode settings --------------------------------------------------
 T: 500           # timesteps per episode
 n_runs: 1000      # how many independent episodes to launch as a batch
-Mf: 0.1         # forage-cost (identical across agents/environments)
 
 # Plot switches -----------------------------------------------------
 plot:

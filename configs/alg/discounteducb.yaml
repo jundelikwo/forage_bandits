@@ -7,4 +7,5 @@ energy_adaptive: false     # true = EA-UCB
 Mf: ${Mf}
 c: ${c}                    # exploration coefficient (will be set later)
 init_energy: 3.912023005428146 # initial energy of the agent
+forage_cost: 0.3912023005428146 # forage cost
 energy_factor_alg: linear

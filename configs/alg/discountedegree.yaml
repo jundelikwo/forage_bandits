@@ -6,4 +6,5 @@ eta: 1                     # pseudo-count for unseen arms
 energy_adaptive: false     # set to true for EA-ε-Greedy
 Mf: ${Mf}                  # inherit global forage-cost
 init_energy: 3.912023005428146 # initial energy of the agent
+forage_cost: 0.3912023005428146 # forage cost
 energy_factor_alg: linear
