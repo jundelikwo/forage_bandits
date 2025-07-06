@@ -109,6 +109,12 @@ python experiments/discount_factor_sensitivity.py env.n_arms=4 env=poisson_dynam
 
 python experiments/pairwise_comparison.py env.n_arms=4 env=risky_single_optimal plot.energy=true
 python experiments/pairwise_comparison.py env.n_arms=4 env=risky_single_optimal plot.energy=true discounted_agents=true
+
+python experiments/pairwise_comparison_energy_factors.py env.n_arms=4 env=single_optimal plot.energy=true
+python experiments/pairwise_comparison_energy_factors.py env.n_arms=12 env=single_optimal plot.energy=true
+python experiments/pairwise_comparison_energy_factors.py env.n_arms=10 env=sigmoid plot.energy=true
+python experiments/pairwise_comparison_energy_factors.py env.n_arms=4 env=risky_single_optimal plot.energy=true
+python experiments/pairwise_comparison_energy_factors.py env.n_arms=4 env=risky_single_optimal plot.energy=true discounted_agents=true
 ```
 
 ## Configuration

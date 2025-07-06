@@ -24,6 +24,7 @@ import numpy as np
 from typing import Optional
 
 from .base import AgentBase
+from ..energy_factors import energy_factor_linear, energy_factor_exp, energy_factor_flip_exp, energy_factor_thr, energy_factor_parabolic, energy_factor_sigmoid
 
 
 class EpsilonGreedy(AgentBase):
@@ -42,6 +43,8 @@ class EpsilonGreedy(AgentBase):
     forage_cost:
         Constant energetic cost *M_f* subtracted every trial when
         *energy_adaptive* is *True*.
+    energy_factor_alg:
+        Energy factor algorithm to use. Default "linear".
     rng:
         Optional NumPy random generator to make simulation seeds reproducible.
     eta:
@@ -57,6 +60,7 @@ class EpsilonGreedy(AgentBase):
         init_energy: float = 1.0,
         Emax: float = 1.0,
         forage_cost: float = 0.0,
+        energy_factor_alg: str = "linear",
         rng: Optional[np.random.Generator] = None,
         eta: int | float | None = None,
     ) -> None:
@@ -77,6 +81,7 @@ class EpsilonGreedy(AgentBase):
         # Energy bookkeeping
         self.energy = float(init_energy)
         self.forage_cost = float(forage_cost)
+        self.energy_factor_alg = energy_factor_alg
         if not energy_adaptive:
             # avoid pylint / mypy unused‑attribute warnings in baseline variant
             del init_energy, forage_cost
@@ -85,13 +90,27 @@ class EpsilonGreedy(AgentBase):
 
         self._last_was_explore = False
 
+    def _get_energy_factor(self, energy: float) -> float:
+        if self.energy_factor_alg == "linear":
+            return energy_factor_linear(energy)
+        elif self.energy_factor_alg == "exp":
+            return energy_factor_exp(energy)
+        elif self.energy_factor_alg == "flip_exp":
+            return energy_factor_flip_exp(energy)
+        elif self.energy_factor_alg == "thr":
+            return energy_factor_thr(energy)
+        elif self.energy_factor_alg == "parabolic":
+            return energy_factor_parabolic(energy)
+        elif self.energy_factor_alg == "sigmoid":
+            return energy_factor_sigmoid(energy)
+
     # ------------------------------------------------------------------
     # AgentBase interface
     # ------------------------------------------------------------------
     def act(self, t: int) -> int:  # noqa: D401, ARG002  (t can be used if needed)
         """Choose an arm index for time‑step *t*."""
         # Effective exploration rate
-        energy_factor = (self.energy / self.Emax) if self.energy_adaptive else 1.0
+        energy_factor = self._get_energy_factor(self.energy / self.Emax) if self.energy_adaptive else 1.0
         eps_eff = self.epsilon * energy_factor
 
         if eps_eff < self.epsilon * 0.1:

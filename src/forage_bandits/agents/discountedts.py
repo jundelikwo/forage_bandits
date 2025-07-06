@@ -52,6 +52,7 @@ from typing import Union
 import numpy as np
 
 from .base import AgentBase
+from ..energy_factors import energy_factor_linear, energy_factor_exp, energy_factor_flip_exp, energy_factor_thr, energy_factor_parabolic, energy_factor_sigmoid
 
 
 class DiscountedThompsonSampling(AgentBase):
@@ -69,6 +70,7 @@ class DiscountedThompsonSampling(AgentBase):
         eta: int | float | None = None,
         alpha0: float = 1.0,
         beta0: float = 1.0,
+        energy_factor_alg: str = "linear",
         rng: Union[np.random.Generator, int, None] = None,
     ) -> None:
         super().__init__(n_arms)
@@ -80,6 +82,7 @@ class DiscountedThompsonSampling(AgentBase):
         self.energy_adaptive = bool(energy_adaptive)
         self.Mf = float(forage_cost)
         self._rng = np.random.default_rng(rng)
+        self.energy_factor_alg = energy_factor_alg
 
         # Prior / Posterior params per arm
         self._mu = np.zeros(n_arms, dtype=np.float64)  # μ̄ₐ
@@ -106,12 +109,26 @@ class DiscountedThompsonSampling(AgentBase):
 
         self._last_was_explore = False
 
+    def _get_energy_factor(self, energy: float) -> float:
+        if self.energy_factor_alg == "linear":
+            return energy_factor_linear(energy)
+        elif self.energy_factor_alg == "exp":
+            return energy_factor_exp(energy)
+        elif self.energy_factor_alg == "flip_exp":
+            return energy_factor_flip_exp(energy)
+        elif self.energy_factor_alg == "thr":
+            return energy_factor_thr(energy)
+        elif self.energy_factor_alg == "parabolic":
+            return energy_factor_parabolic(energy)
+        elif self.energy_factor_alg == "sigmoid":
+            return energy_factor_sigmoid(energy)
+
     # ------------------------------------------------------------------
     # Simulator API
     # ------------------------------------------------------------------
     def act(self, t: int) -> int:  # noqa: D401
         """Sample NG posterior and return arm index with biggest sample."""
-        energy_factor = (self.energy / self.Emax) if self.energy_adaptive else 1.0
+        energy_factor = self._get_energy_factor(self.energy / self.Emax) if self.energy_adaptive else 1.0
 
         # Draw from Gamma for each arm → tau (precision)
         tau = self._rng.gamma(shape=self._alpha, scale=1.0 / self._beta)

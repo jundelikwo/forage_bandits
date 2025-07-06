@@ -30,6 +30,7 @@ from typing import Optional
 import numpy as np
 
 from .base import AgentBase
+from ..energy_factors import energy_factor_linear, energy_factor_exp, energy_factor_flip_exp, energy_factor_thr, energy_factor_parabolic, energy_factor_sigmoid
 
 
 class UCB(AgentBase):
@@ -50,6 +51,8 @@ class UCB(AgentBase):
         *energy_adaptive=False* (but accepted for API consistency).
     M_init:
         Initial energy *M(0)*, default 1.0.
+    energy_factor_alg:
+        Energy factor algorithm to use. Default "linear".
     rng:
         Optional NumPy ``Generator`` or integer seed.
     eta:
@@ -65,6 +68,7 @@ class UCB(AgentBase):
         forage_cost: float = 0.0,
         init_energy: float = 1.0,
         Emax: float = 1.0,
+        energy_factor_alg: str = "linear",
         rng: Optional[np.random.Generator | int] = None,
         eta: int | float | None = None,
     ) -> None:
@@ -82,6 +86,7 @@ class UCB(AgentBase):
         self._Mf = float(forage_cost)
         self.energy = float(init_energy)
         self.Emax: float = Emax
+        self.energy_factor_alg = energy_factor_alg
         
         # Statistics
         if eta is None:
@@ -122,6 +127,20 @@ class UCB(AgentBase):
     #     best = np.flatnonzero(ucb_values == ucb_values.max())
     #     return int(self.rng.choice(best))
 
+    def _get_energy_factor(self, energy: float) -> float:
+        if self.energy_factor_alg == "linear":
+            return energy_factor_linear(energy)
+        elif self.energy_factor_alg == "exp":
+            return energy_factor_exp(energy)
+        elif self.energy_factor_alg == "flip_exp":
+            return energy_factor_flip_exp(energy)
+        elif self.energy_factor_alg == "thr":
+            return energy_factor_thr(energy)
+        elif self.energy_factor_alg == "parabolic":
+            return energy_factor_parabolic(energy)
+        elif self.energy_factor_alg == "sigmoid":
+            return energy_factor_sigmoid(energy)
+
     def act(self, t: int) -> int:
         """Choose an arm according to (EA‑)UCB1."""
         # Convert 0-based index to 1-based trial count
@@ -131,7 +150,7 @@ class UCB(AgentBase):
         means = np.zeros_like(self._counts, dtype=float)
         np.divide(self._sum_rwd, self._counts, out=means, where=self._counts != 0)
         
-        energy_factor = (self.energy / self.Emax) if self.energy_adaptive else 1.0
+        energy_factor = self._get_energy_factor(self.energy / self.Emax) if self.energy_adaptive else 1.0
         energy_factor = max(energy_factor, 0)
         c_eff = self._c * energy_factor  # Scale by energy
         pads = c_eff * np.sqrt((np.log(total_trials)) / (self._counts + self.eta))

@@ -240,6 +240,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             forage_cost=np.log(50)/10,
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+            energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
         )
     if name == "egree" or name == "ea_egree":
         return EpsilonGreedy(
@@ -251,6 +252,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             forage_cost=np.log(50)/10,
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+            energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
         )
     if name == "ts" or name == "ea_ts":
         return ThompsonSampling(
@@ -261,6 +263,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             forage_cost=np.log(50)/10,
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+            energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
         )
     if name == "discounteducb":
         return DiscountedUCB(
@@ -273,6 +276,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             forage_cost=np.log(50)/10, 
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+            energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
         )
     if name == "discountedegree":
         return DiscountedEpsilonGreedy(
@@ -285,6 +289,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             forage_cost=np.log(50)/10,
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+            energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
         )
     if name == "discountedts":
         return DiscountedThompsonSampling(
@@ -296,6 +301,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             forage_cost=np.log(50)/10,
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+            energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
         )
     raise ValueError(f"Unknown agent name '{cfg.name}'.")
 
