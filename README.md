@@ -90,6 +90,13 @@ python experiments/pairwise_comparison.py env.n_arms=2 env=poisson_dynamic_singl
 python experiments/pairwise_comparison.py env.n_arms=2 env=poisson_dynamic_single_optimal discounted_agents=true
 python experiments/pairwise_comparison.py env.n_arms=4 env=poisson_dynamic_single_optimal
 python experiments/pairwise_comparison.py env.n_arms=4 env=poisson_dynamic_single_optimal discounted_agents=true
+
+python experiments/discount_factor_sensitivity.py env.n_arms=2 env=dynamic_single_optimal
+python experiments/discount_factor_sensitivity.py env.n_arms=2 env=poisson_dynamic_single_optimal
+python experiments/discount_factor_sensitivity.py env.n_arms=3 env=dynamic_single_optimal
+python experiments/discount_factor_sensitivity.py env.n_arms=3 env=poisson_dynamic_single_optimal
+python experiments/discount_factor_sensitivity.py env.n_arms=4 env=dynamic_single_optimal
+python experiments/discount_factor_sensitivity.py env.n_arms=4 env=poisson_dynamic_single_optimal
 ```
 
 ## Configuration
