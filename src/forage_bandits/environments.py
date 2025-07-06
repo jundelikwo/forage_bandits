@@ -40,6 +40,7 @@ __all__ = [
     "DynamicSingleOptimalEnv",
     "PoissonDynamicSingleOptimalEnv",
     "DynamicSigmoidEnv",
+    "PoissonDynamicSigmoidEnv",
     "make_env",
 ]
 
@@ -327,6 +328,70 @@ class DynamicSingleOptimalEnv:
         return self._arms[self.opt_index].mean
 
 
+class PoissonDynamicSigmoidEnv:
+    """K‑armed bandit where μ_i follows a sigmoid curve.
+
+    Mean reward of arm *i* (0‑based) is
+
+        μ_i = 1 / (1 + exp(-k (i - i₀)))                          (Eq. 4.17)
+
+    with steepness *k* and centre *i₀ = (K − 1)/2* by default.
+    Rewards are Gaussian around μ_i with std *sigma*.
+    """
+
+    def __init__(
+        self,
+        n_arms: int,
+        *,
+        mu_opt: float = 0.2,
+        k: float = 10.0,
+        sigma: float = 0.02,
+        poisson_lambda: float = 0.05,
+        rng: Union[int, np.random.Generator, None] = None,
+        **kwargs,
+    ) -> None:
+        self._rng = np.random.default_rng(rng)
+        self.n_arms = int(n_arms)
+        self.k = float(k)
+        self.sigma = float(sigma)
+        self.mu_opt = float(mu_opt)
+        Emax = np.log(50)
+        basal_cost = Emax / 10
+        mu_opt = 2 * basal_cost  # Optimal arm mean
+        self.mu_opt = mu_opt
+        
+        # Poisson distribution parameters
+        self.poisson_lambda = float(poisson_lambda)  # Expected change frequency
+        self.poisson_distribution = self._rng.poisson  # Poisson distribution function
+
+        # Compute means once
+        self._means = np.array([
+            self.mu_opt / (1 + np.exp(-self.k * (i/(n_arms-1) - 0.5)))
+            for i in range(n_arms)
+        ], dtype=np.float64)
+
+    # ------------------------------------------------------------------
+    def pull(self, arm: int) -> float:  # noqa: D401
+        if self._should_change_arm():
+            self._change_optimal_arm()
+
+        reward = self._rng.normal(self._means[arm], 0.1 * self.mu_opt)
+        return reward
+
+    def _should_change_arm(self) -> bool:
+        # Sample from Poisson distribution with parameter lambda
+        # If the sample is >= 1, we change the arm
+        # This gives us approximately lambda probability of changing per timestep
+        return self.poisson_distribution(self.poisson_lambda) >= 1
+    
+    def _change_optimal_arm(self):
+        """Change the optimal arm to a random new one."""
+        self._rng.shuffle(self._means)
+
+    def true_means(self) -> np.ndarray:  # noqa: D401
+        return self._means.copy()
+
+
 class PoissonDynamicSingleOptimalEnv:
     """K‑armed bandit with a single best arm that changes based on Poisson distribution.
 
@@ -446,6 +511,7 @@ _ENV_REGISTRY = {
     "poisson_dynamic_single_optimal": PoissonDynamicSingleOptimalEnv,
     "sigmoid": SigmoidEnv,
     "dynamic_sigmoid": DynamicSigmoidEnv,
+    "poisson_dynamic_sigmoid": PoissonDynamicSigmoidEnv,
 }
 
 
