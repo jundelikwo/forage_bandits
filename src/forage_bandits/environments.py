@@ -36,6 +36,7 @@ from omegaconf import DictConfig
 __all__ = [
     "BanditEnvBase",
     "SingleOptimalEnv",
+    "RiskySingleOptimalEnv",
     "SigmoidEnv",
     "DynamicSingleOptimalEnv",
     "PoissonDynamicSingleOptimalEnv",
@@ -122,6 +123,91 @@ class SingleOptimalEnv:
     # ------------------------------------------------------------------
     def pull(self, arm: int) -> float:  # noqa: D401
         return self._arms[arm].sample(self._rng)
+
+    # ------------------------------------------------------------------
+    def true_means(self) -> np.ndarray:  # noqa: D401
+        return np.array([arm.mean for arm in self._arms], dtype=np.float64)
+
+    # ------------------------------------------------------------------
+    # Extras
+    # ------------------------------------------------------------------
+    def optimal_mean(self) -> float:  # noqa: D401
+        return self._arms[self.opt_index].mean
+
+
+class RiskySingleOptimalEnv:
+    """K‑armed bandit with a single best arm and a risky arm.
+
+    Parameters
+    ----------
+    n_arms : int
+        Number of arms (*K* in the thesis).
+    mu_opt : float, default 1.0
+        Mean reward of the optimal arm.
+    mu_sub : float, default 0.0
+        Mean reward of all sub‑optimal arms.
+    mu_risky : float, default 0.4
+        Mean reward of the risky arm.
+    sigma  : float, default 0.1
+        Shared standard deviation for Gaussian noise.
+    opt_index : int | None
+        Which arm is optimal. If *None* (default) a random index is chosen.
+    risky_index : int | None
+        Which arm is risky. If *None* (default) a random index is chosen.
+    rng : int | np.random.Generator | None
+        Seed or Generator for reproducibility.
+    """
+
+    def __init__(
+        self,
+        n_arms: int,
+        *,
+        mu_opt: float = 0.2,
+        mu_sub: float = 0.04,
+        mu_risky: float = 0.4,
+        sigma: float = 0.02,
+        risky_arm_punishment: float = -0.1,
+        opt_index: int | None = None,
+        risky_index: int | None = None,
+        rng: Union[int, np.random.Generator, None] = None,
+        **kwargs,
+    ) -> None:
+        if n_arms < 3:
+            raise ValueError("RiskySingleOptimalEnv requires at least 3 arms.")
+        
+        Emax = np.log(50)
+        basal_cost = Emax / 10
+        mu_opt = 2 * basal_cost  # Optimal arm mean
+        mu_risky = 2 * mu_opt  # Risky arm mean
+        mu_sub = 0.2 * mu_opt    # Suboptimal arm mean
+        sigma = 0.1
+        risky_arm_punishment = -basal_cost # Risky arm punishment
+        self.risky_arm_punishment = risky_arm_punishment
+
+        self._rng = np.random.default_rng(rng)
+        self.n_arms = int(n_arms)
+        # self.opt_index = self._rng.integers(0, n_arms) if opt_index is None else int(opt_index)
+        self.opt_index = n_arms - 1 if opt_index is None else int(opt_index)
+        self.risky_index = n_arms - 2 if risky_index is None else int(risky_index)
+
+        self._arms = []
+
+        for i in range(n_arms):
+            if i == self.risky_index:
+                self._arms.append(_GaussianArm(mu_risky, 0))
+            elif i == self.opt_index:
+                self._arms.append(_GaussianArm(mu_opt, sigma))
+            else:
+                self._arms.append(_GaussianArm(mu_sub, sigma))
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+    def pull(self, arm: int) -> float:  # noqa: D401
+        if arm == self.risky_index and self._rng.random() < 0.5:
+            return self.risky_arm_punishment
+        else:
+            return self._arms[arm].sample(self._rng)
 
     # ------------------------------------------------------------------
     def true_means(self) -> np.ndarray:  # noqa: D401
@@ -512,6 +598,7 @@ _ENV_REGISTRY = {
     "sigmoid": SigmoidEnv,
     "dynamic_sigmoid": DynamicSigmoidEnv,
     "poisson_dynamic_sigmoid": PoissonDynamicSigmoidEnv,
+    "risky_single_optimal": RiskySingleOptimalEnv,
 }
 
 

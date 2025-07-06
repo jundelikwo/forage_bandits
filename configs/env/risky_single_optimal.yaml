@@ -1,0 +1,8 @@
+# Risky Single-Optimal Gaussian (Section 4.3)
+name: risky_single_optimal
+n_arms: 3             # number of arms
+mu_opt: 0.2       # mean of the single best arm
+mu_risky: 0.4    # mean of the risky arm
+mu_sub: 0.04    # mean of every other arm
+sigma: 0.02       # shared Gaussian noise std-dev
+risky_arm_punishment: -0.1 # punishment for choosing the risky arm
