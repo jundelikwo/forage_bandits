@@ -106,6 +106,9 @@ python experiments/discount_factor_sensitivity.py env.n_arms=3 env=dynamic_singl
 python experiments/discount_factor_sensitivity.py env.n_arms=3 env=poisson_dynamic_single_optimal
 python experiments/discount_factor_sensitivity.py env.n_arms=4 env=dynamic_single_optimal
 python experiments/discount_factor_sensitivity.py env.n_arms=4 env=poisson_dynamic_single_optimal
+
+python experiments/pairwise_comparison.py env.n_arms=4 env=risky_single_optimal plot.energy=true
+python experiments/pairwise_comparison.py env.n_arms=4 env=risky_single_optimal plot.energy=true discounted_agents=true
 ```
 
 ## Configuration

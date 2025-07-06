@@ -19,7 +19,7 @@ Mf: 0.1         # forage-cost (identical across agents/environments)
 # Plot switches -----------------------------------------------------
 plot:
   regret: true
-  energy: true
+  energy: false
   hazard: true
   lifetime: true
   explore: true

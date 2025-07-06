@@ -144,7 +144,7 @@ def plot_energy_trajectory(
     ax.set_xlabel("Timestep $t$")
     ax.set_ylabel("Energy $M(t)$")
     ax.set_title("Energy Trajectory")
-    ax.set_ylim(0.0, 1.05)
+    # ax.set_ylim(0.0, 1.05)
     if label or ax.get_legend_handles_labels()[0]:
         ax.legend(frameon=False)
     return ax
