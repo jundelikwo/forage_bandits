@@ -63,7 +63,7 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
 
         # ε-Greedy
         print(f"  ε-Greedy (energy factor: {factors[0]})...")
-        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discountedegree" if is_discounted else "egree", True, factors[0], eta=0)
+        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discountedegree" if is_discounted else "egree", True, factors[0])
         print(f"  ε-Greedy (energy factor: {factors[1]})...")
         hazard_ea, regret_ea, exploring_ea, lifetimes_ea, energy_ea = run_simulation(cfg, "discountedegree" if is_discounted else "egree", True, factors[1])
         print(f"  ε-Greedy (energy factor: {factors[2]})...")
@@ -83,7 +83,7 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
 
         # UCB
         print(f"  UCB (energy factor: {factors[0]})...")
-        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", True, factors[0], eta=0)
+        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", True, factors[0])
         print(f"  UCB (energy factor: {factors[1]})...")
         hazard_ea, regret_ea, exploring_ea, lifetimes_ea, energy_ea = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", True, factors[1])
         print(f"  UCB (energy factor: {factors[2]})...")
@@ -102,7 +102,7 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
 
         # TS
         print(f"  TS (energy factor: {factors[0]})...")
-        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discountedts" if is_discounted else "ts", True, factors[0], eta=0)
+        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discountedts" if is_discounted else "ts", True, factors[0])
         print(f"  TS (energy factor: {factors[1]})...")
         hazard_ea, regret_ea, exploring_ea, lifetimes_ea, energy_ea = run_simulation(cfg, "discountedts" if is_discounted else "ts", True, factors[1])
         print(f"  TS (energy factor: {factors[2]})...")
@@ -121,7 +121,7 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
         output_dir = Path("experiments/results")
         output_dir.mkdir(exist_ok=True)
         plt.tight_layout()
-        plt.savefig(output_dir / f"pairwise_comparison_{cfg.env.name}_{cfg.env.n_arms}_run{run}{"_discounted" if is_discounted else ""}.png")
+        plt.savefig(output_dir / f"pairwise_comparison_energy_factors_{cfg.env.name}_{cfg.env.n_arms}_run{run}{"_discounted" if is_discounted else ""}.png")
 
     log.info("Done! Figures saved under %s", output_dir)
 
