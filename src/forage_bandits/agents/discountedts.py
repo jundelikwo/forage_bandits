@@ -52,7 +52,7 @@ from typing import Union
 import numpy as np
 
 from .base import AgentBase
-from ..energy_factors import energy_factor_linear, energy_factor_exp, energy_factor_flip_exp, energy_factor_thr, energy_factor_parabolic, energy_factor_sigmoid
+from ..energy_factors import energy_factor_linear, energy_factor_exp, energy_factor_flip_exp, energy_factor_thr, energy_factor_parabolic, energy_factor_sigmoid, energy_factor_flip_linear
 
 
 class DiscountedThompsonSampling(AgentBase):
@@ -112,6 +112,8 @@ class DiscountedThompsonSampling(AgentBase):
     def _get_energy_factor(self, energy: float) -> float:
         if self.energy_factor_alg == "linear":
             return energy_factor_linear(energy)
+        elif self.energy_factor_alg == "flip_linear":
+            return energy_factor_flip_linear(energy)
         elif self.energy_factor_alg == "exp":
             return energy_factor_exp(energy)
         elif self.energy_factor_alg == "flip_exp":

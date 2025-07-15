@@ -6,6 +6,7 @@ import numpy as np
 
 __all__ = [
     "energy_factor_linear",
+    "energy_factor_flip_linear",
     "energy_factor_exp",
     "energy_factor_flip_exp",
     "energy_factor_thr",
@@ -24,6 +25,10 @@ min_parabolic = 0.1 # minimum value for parabolic function
 def energy_factor_linear(energy):
     """Linear: f_lin(E) = E"""
     return energy
+
+def energy_factor_flip_linear(energy):
+    """Linear: f_lin(E) = 1 - E"""
+    return 1 - energy
 
 def energy_factor_exp(energy, a=alpha):
     """Mild exponential: f_exp(E) = exp(-α(1-E))"""
