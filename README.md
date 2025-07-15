@@ -118,6 +118,9 @@ python experiments/pairwise_comparison_energy_factors.py env.n_arms=4 env=risky_
 
 python experiments/risk_sensitivity_pairwise_comparison_energy_factors.py env.n_arms=3 env=risky_single_optimal plot.energy=true
 python experiments/risk_sensitivity_pairwise_comparison_energy_factors.py env.n_arms=4 env=risky_single_optimal plot.energy=true
+
+python experiments/ucb_risk_sensitivity_pairwise_comparison_energy_factors.py env.n_arms=3 env=risky_single_optimal plot.energy=true
+python experiments/ucb_risk_sensitivity_pairwise_comparison_energy_factors.py env.n_arms=4 env=risky_single_optimal plot.energy=true
 ```
 
 ## Configuration
