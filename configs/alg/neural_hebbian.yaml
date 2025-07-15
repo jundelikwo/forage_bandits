@@ -1,0 +1,25 @@
+# Neural Hebbian Agent Configuration
+# Biologically plausible neural agent with dopamine-modulated Hebbian learning
+
+# Agent type
+name: "neural_hebbian"
+
+# Neural network parameters
+hidden_size: 16  # Number of hidden neurons (Kenyon cells)
+learning_rate: 1.0  # Base learning rate for synaptic weight updates
+dopamine_sensitivity: 1.0  # Sensitivity to reward signals (dopamine modulation)
+
+# Energy modulation parameters
+energy_adaptive: true  # Whether to modulate learning rate based on energy
+energy_factor_alg: linear  # Energy factor algorithm for learning rate modulation
+
+# Synaptic plasticity parameters
+weight_decay: 0.001  # Synaptic weight decay rate (forgetting)
+exploration_noise: 0.2  # Standard deviation of exploration noise
+
+# Energy parameters
+init_energy: 3.912023005428146 # initial energy of the agent
+forage_cost: 0.3912023005428146 # forage cost
+
+# Random seed for reproducibility
+seed: 42 

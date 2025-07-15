@@ -35,7 +35,7 @@ import concurrent.futures
 
 from . import metrics as _m
 from .environments import BanditEnvBase, make_env
-from .agents import EpsilonGreedy, UCB, ThompsonSampling, DiscountedUCB, DiscountedEpsilonGreedy, DiscountedThompsonSampling
+from .agents import EpsilonGreedy, UCB, ThompsonSampling, DiscountedUCB, DiscountedEpsilonGreedy, DiscountedThompsonSampling, NeuralHebbianAgent
 
 __all__ = [
     "SimulationResult",
@@ -302,6 +302,21 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
             energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
+        )
+    if name == "neural_hebbian":
+        return NeuralHebbianAgent(
+            n_arms=n_arms,
+            Emax=np.log(50),
+            energy_adaptive=energy_adaptive,
+            hidden_size=int(getattr(cfg, "hidden_size", 16)),
+            init_energy=float(getattr(cfg, "init_energy", np.log(50))),
+            forage_cost=float(getattr(cfg, "forage_cost", np.log(50)/10)),
+            learning_rate=float(getattr(cfg, "learning_rate", 1.0)),
+            dopamine_sensitivity=float(getattr(cfg, "dopamine_sensitivity", 1.0)),
+            energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
+            weight_decay=float(getattr(cfg, "weight_decay", 0.001)),
+            exploration_noise=float(getattr(cfg, "exploration_noise", 0.2)),
+            rng=agent_rng,
         )
     raise ValueError(f"Unknown agent name '{cfg.name}'.")
 
