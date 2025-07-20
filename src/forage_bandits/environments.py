@@ -194,7 +194,7 @@ class RiskySingleOptimalEnv:
 
         for i in range(n_arms):
             if i == self.risky_index:
-                self._arms.append(_GaussianArm(mu_risky, 0))
+                self._arms.append(_GaussianArm(mu_risky, sigma))
             elif i == self.opt_index:
                 self._arms.append(_GaussianArm(mu_opt, sigma))
             else:
