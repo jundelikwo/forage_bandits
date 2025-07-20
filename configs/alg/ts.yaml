@@ -6,3 +6,5 @@ Mf: ${Mf}
 init_energy: 3.912023005428146 # initial energy of the agent
 forage_cost: 0.3912023005428146 # forage cost
 energy_factor_alg: linear
+alpha0: 1.0
+beta0: 1.0

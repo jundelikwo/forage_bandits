@@ -262,6 +262,8 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             energy_adaptive=energy_adaptive,
             forage_cost=float(getattr(cfg, "forage_cost", np.log(50)/10)),
             rng=agent_rng,
+            alpha0=float(getattr(cfg, "alpha0", 1.0)),
+            beta0=float(getattr(cfg, "beta0", 1.0)),
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
             energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
         )
