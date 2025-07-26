@@ -65,59 +65,58 @@ def main(cfg: DictConfig) -> None:  # pragma: no cover
 
     log.info("Configuration:\n%s", OmegaConf.to_yaml(cfg))
     plot_energy = cfg.plot.energy
-    is_discounted = cfg.discounted_agents
     fig, axes = plt.subplots(6, 3, figsize=(18, 30), dpi=200)
 
     print("  UCB (no energy)...")
-    no_energy_label = "Discounted UCB (no energy)" if is_discounted else "UCB (no energy)"
-    hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", False, "linear", eta=0)
+    no_energy_label = "UCB (no energy)"
+    hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "ucb", False, "linear", eta=0)
     ax = plot_lifetime_distribution(lifetimes, ax=axes[0, 0], label=no_energy_label)
-    ax.set_xlim(0, 15)
+    # ax.set_xlim(0, 15)
     plot_energy_trajectory(energy, ax=axes[1, 0], label=no_energy_label)
     ax = plot_lifetime_distribution(lifetimes, ax=axes[0, 1], label=no_energy_label)
-    ax.set_xlim(0, 15)
+    # ax.set_xlim(0, 15)
     plot_energy_trajectory(energy, ax=axes[1, 1], label=no_energy_label)
     ax = plot_lifetime_distribution(lifetimes, ax=axes[0, 2], label=no_energy_label)
-    ax.set_xlim(0, 15)
+    # ax.set_xlim(0, 15)
     plot_energy_trajectory(energy, ax=axes[1, 2], label=no_energy_label)
 
     print("  UCB (energy factor: linear)...")
-    linear_energy_label = "Discounted UCB (linear)" if is_discounted else "UCB (linear)"
-    hazard, regret, exploring, lifetimes_linear, energy_linear = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", True, "linear")
+    linear_energy_label = "UCB (linear)"
+    hazard, regret, exploring, lifetimes_linear, energy_linear = run_simulation(cfg, "ucb", True, "linear")
 
     for run in range(2):
         lifetime_x = 2 if run == 0 else 4
         energy_x = 3 if run == 0 else 5
         factors = first_run_energy_factors if run == 0 else second_run_energy_factors
-        fig.suptitle(f"n_arms={cfg.env.n_arms}: {cfg.env.name} environment", fontsize=22, fontweight="bold", y=0.99)
+        fig.suptitle(f"n_arms={cfg.env.n_arms}: {cfg.env.name} environment (init energy = {cfg.alg.init_energy/np.log(50)}, forage cost = {round(cfg.alg.forage_cost/np.log(50), 2)})", fontsize=22, fontweight="bold", y=0.99)
 
         # UCB
         print(f"  UCB (energy factor: {factors[0]})...")
-        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", True, factors[0])
-        energy_label = f"Discounted UCB ({factors[0]})" if is_discounted else f"UCB ({factors[0]})"
+        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "ucb", True, factors[0])
+        energy_label = f"UCB ({factors[0]})"
         ax = plot_lifetime_distribution(lifetimes_linear, ax=axes[lifetime_x, 0], energy_lifetimes=lifetimes, label=linear_energy_label, energy_label=energy_label)
-        ax.set_xlim(0, 15)
+        # ax.set_xlim(0, 15)
         plot_energy_trajectory(energy_linear, ax=axes[energy_x, 0], label=linear_energy_label, energy_label=energy_label, energy_energy=energy)
         
         print(f"  UCB (energy factor: {factors[1]})...")
-        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", True, factors[1])
-        energy_label = f"Discounted UCB ({factors[1]})" if is_discounted else f"UCB ({factors[1]})"
+        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "ucb", True, factors[1])
+        energy_label = f"UCB ({factors[1]})"
         ax = plot_lifetime_distribution(lifetimes_linear, ax=axes[lifetime_x, 1], energy_lifetimes=lifetimes, label=linear_energy_label, energy_label=energy_label)
-        ax.set_xlim(0, 15)
+        # ax.set_xlim(0, 15)
         plot_energy_trajectory(energy_linear, ax=axes[energy_x, 1], label=linear_energy_label, energy_label=energy_label, energy_energy=energy)
         
         print(f"  UCB (energy factor: {factors[2]})...")
-        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "discounteducb" if is_discounted else "ucb", True, factors[2])
-        energy_label = f"Discounted UCB ({factors[2]})" if is_discounted else f"UCB ({factors[2]})"
+        hazard, regret, exploring, lifetimes, energy = run_simulation(cfg, "ucb", True, factors[2])
+        energy_label = f"UCB ({factors[2]})"
         ax = plot_lifetime_distribution(lifetimes_linear, ax=axes[lifetime_x, 2], energy_lifetimes=lifetimes, label=linear_energy_label, energy_label=energy_label)
-        ax.set_xlim(0, 15)
+        # ax.set_xlim(0, 15)
         plot_energy_trajectory(energy_linear, ax=axes[energy_x, 2], label=linear_energy_label, energy_label=energy_label, energy_energy=energy)
     
     
     output_dir = Path("experiments/results")
     output_dir.mkdir(exist_ok=True)
     plt.tight_layout()
-    plt.savefig(output_dir / f"ucb_risk_sensitivity_pairwise_comparison_energy_factors_{cfg.env.name}_{cfg.env.n_arms}_run{run}{"_discounted" if is_discounted else ""}.png")
+    plt.savefig(output_dir / f"ucb_risk_sensitivity_pairwise_comparison_energy_factors_{cfg.env.name}_{cfg.env.n_arms}_run{run}.png")
     
     log.info("Done! Figures saved under %s", output_dir)
 
