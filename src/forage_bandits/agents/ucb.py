@@ -111,22 +111,6 @@ class UCB(AgentBase):
     # AgentBase API
     # ---------------------------------------------------------------------
 
-    # def act(self, t: int) -> int:  # noqa: D401 – short method ok
-    #     """Choose an arm according to (EA‑)UCB1."""
-    #     # Play each arm at least once to avoid division‑by‑zero.
-    #     unexplored = np.flatnonzero(self._counts == 0)
-    #     if unexplored.size:
-    #         return int(self.rng.choice(unexplored))
-
-    #     means = self._sum_rwd / self._counts
-    #     # UCB padding term
-    #     c_eff = self._c * (self.energy if self.energy_adaptive else 1.0)
-    #     pads = c_eff * np.sqrt(2.0 * np.log(max(t, 1)) / self._counts)
-    #     ucb_values = means + pads
-    #     # Break ties uniformly at random for stability
-    #     best = np.flatnonzero(ucb_values == ucb_values.max())
-    #     return int(self.rng.choice(best))
-
     def _get_energy_factor(self, energy: float) -> float:
         if self.energy_factor_alg == "linear":
             return energy_factor_linear(energy)
