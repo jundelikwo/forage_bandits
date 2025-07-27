@@ -44,7 +44,7 @@ This implementation is side‑effect‑free and NumPy‑only.
 """
 from __future__ import annotations
 
-from typing import Union
+from typing import Union, Callable
 
 import numpy as np
 
@@ -68,6 +68,7 @@ class ThompsonSampling(AgentBase):
         beta0: float = 1.0,
         energy_factor_alg: str = "linear",
         rng: Union[np.random.Generator, int, None] = None,
+        custom_exploration_function: Callable[[float, bool], float] = None,
     ) -> None:
         super().__init__(n_arms)
         self.energy_adaptive = bool(energy_adaptive)
@@ -92,7 +93,7 @@ class ThompsonSampling(AgentBase):
         self.energy: float = init_energy
         self.Emax: float = Emax
         self.energy_factor_alg = energy_factor_alg
-
+        self.custom_exploration_function = custom_exploration_function
         self._last_was_explore = False
 
     # ------------------------------------------------------------------
@@ -101,6 +102,9 @@ class ThompsonSampling(AgentBase):
     def act(self, t: int) -> int:  # noqa: D401
         """Sample NG posterior and return arm index with biggest sample."""
         energy_factor = self._get_energy_factor(self.energy / self.Emax) if self.energy_adaptive else 1.0
+
+        if self.custom_exploration_function is not None:
+            energy_factor = self.custom_exploration_function(self.energy / self.Emax, self.energy_adaptive)
 
         # Draw from Gamma for each arm → tau (precision)
         tau = self._rng.gamma(shape=self._alpha, scale=1.0 / self._beta)

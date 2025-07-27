@@ -22,7 +22,7 @@ This implementation simulates:
 from __future__ import annotations
 
 import numpy as np
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 import math
 
 from .base import AgentBase
@@ -62,6 +62,8 @@ class NeuralHebbianAgent(AgentBase):
         Constant energetic cost M_f subtracted every trial.
     rng : Optional[np.random.Generator], default None
         Optional NumPy random generator for reproducibility.
+    custom_exploration_function:
+        Custom exploration function to use. Default is None. Accepts energy and energy_adaptive as arguments.
     """
 
     def __init__(
@@ -79,6 +81,7 @@ class NeuralHebbianAgent(AgentBase):
         Emax: float = 1.0,
         forage_cost: float = 0.0,
         rng: Optional[np.random.Generator] = None,
+        custom_exploration_function: Callable[[float, bool], float] = None,
     ) -> None:
         # hidden_size = 18
         self.n_arms = n_arms
@@ -91,6 +94,7 @@ class NeuralHebbianAgent(AgentBase):
         self.exploration_noise = float(exploration_noise)
         self.Emax = float(Emax)
         self.forage_cost = float(forage_cost)
+        self.custom_exploration_function = custom_exploration_function
         
         # Energy bookkeeping
         self.energy = float(init_energy)
@@ -284,6 +288,10 @@ class NeuralHebbianAgent(AgentBase):
         
         # Energy-dependent neural noise (more noise when energy is low)
         energy_factor = self._get_energy_factor(self.energy)
+
+        if self.custom_exploration_function is not None:
+            energy_factor = self.custom_exploration_function(self.energy / self.Emax, self.energy_adaptive)
+            
         adaptive_noise = self.exploration_noise * energy_factor
         
         # Add exploration noise (simulating neural noise)

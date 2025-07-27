@@ -21,7 +21,7 @@ This file contains no external dependencies beyond NumPy.
 from __future__ import annotations
 
 import numpy as np
-from typing import Optional
+from typing import Optional, Callable
 
 from .base import AgentBase
 from ..energy_factors import energy_factor_linear, energy_factor_exp, energy_factor_flip_exp, energy_factor_thr, energy_factor_parabolic, energy_factor_sigmoid, energy_factor_flip_linear
@@ -49,6 +49,8 @@ class EpsilonGreedy(AgentBase):
         Optional NumPy random generator to make simulation seeds reproducible.
     eta:
         Pseudo-count for unseen arms. Default is 1 for EA-ε-Greedy, 0 for baseline.
+    custom_exploration_function:
+        Custom exploration function to use. Default is None. Accepts energy and energy_adaptive as arguments.
     """
 
     def __init__(
@@ -63,12 +65,13 @@ class EpsilonGreedy(AgentBase):
         energy_factor_alg: str = "linear",
         rng: Optional[np.random.Generator] = None,
         eta: int | float | None = None,
+        custom_exploration_function: Callable[[float, bool], float] = None,
     ) -> None:
         self.n_arms = n_arms
         self.epsilon = float(epsilon)
         self.energy_adaptive = energy_adaptive
         self.Emax: float = Emax
-
+        self.custom_exploration_function = custom_exploration_function
         # Statistics
         if eta is None:
             eta = 1 if energy_adaptive else 1e-10
@@ -114,6 +117,9 @@ class EpsilonGreedy(AgentBase):
         # Effective exploration rate
         energy_factor = self._get_energy_factor(self.energy / self.Emax) if self.energy_adaptive else 1.0
         eps_eff = self.epsilon * energy_factor
+
+        if self.custom_exploration_function is not None:
+            eps_eff = self.custom_exploration_function(self.energy / self.Emax, self.energy_adaptive)
 
         if eps_eff < self.epsilon * 0.1:
             eps_eff = self.epsilon * 0.1

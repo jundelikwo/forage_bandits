@@ -219,7 +219,7 @@ def run_batch(
 # -----------------------------------------------------------------------------
 
 
-def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _AgentProto:  # noqa: ANN001
+def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None, custom_exploration_function: Callable[[float, bool], float] = None) -> _AgentProto:  # noqa: ANN001
     """Create an agent from config, using environment for n_arms."""
     name = str(cfg.name).lower()
     n_arms = env.n_arms
@@ -241,6 +241,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
             energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
+            custom_exploration_function=custom_exploration_function,
         )
     if name == "egree" or name == "ea_egree":
         return EpsilonGreedy(
@@ -253,6 +254,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             rng=agent_rng,
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
             energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
+            custom_exploration_function=custom_exploration_function,
         )
     if name == "ts" or name == "ea_ts":
         return ThompsonSampling(
@@ -266,6 +268,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             beta0=float(getattr(cfg, "beta0", 1.0)),
             init_energy=float(getattr(cfg, "init_energy", np.log(50))),
             energy_factor_alg=str(getattr(cfg, "energy_factor_alg", "linear")),
+            custom_exploration_function=custom_exploration_function,
         )
     if name == "discounteducb":
         return DiscountedUCB(
@@ -319,6 +322,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None) -> _Ag
             weight_decay=float(getattr(cfg, "weight_decay", 0.001)),
             exploration_noise=float(getattr(cfg, "exploration_noise", 0.2)),
             rng=agent_rng,
+            custom_exploration_function=custom_exploration_function,
         )
     raise ValueError(f"Unknown agent name '{cfg.name}'.")
 
@@ -334,16 +338,16 @@ class EnvFactory:
 
 class AgentFactory:
     """Picklable agent factory."""
-    def __init__(self, env_cfg, alg_cfg):
+    def __init__(self, env_cfg, alg_cfg, custom_exploration_function: Callable[[float, bool], float] = None):
         self.env_cfg = env_cfg
         self.alg_cfg = alg_cfg
+        self.custom_exploration_function = custom_exploration_function
 
     def __call__(self, seed: int) -> _AgentProto:
         env = make_env(self.env_cfg, seed)  # Need env for n_arms
-        return _make_agent_from_cfg(self.alg_cfg, env, seed)
+        return _make_agent_from_cfg(self.alg_cfg, env, seed, self.custom_exploration_function)
 
-
-def from_config(cfg) -> SimulationResult:  # noqa: ANN001
+def from_config(cfg, custom_exploration_function: Callable[[float, bool], float] = None) -> SimulationResult:  # noqa: ANN001
     """Instantiate env & agent from a Hydra/OmegaConf‑style config.
 
     Expected minimal schema::
@@ -364,7 +368,7 @@ def from_config(cfg) -> SimulationResult:  # noqa: ANN001
 
     # Create factory instances
     env_factory = EnvFactory(cfg.env)
-    agent_factory = AgentFactory(cfg.env, cfg.alg)
+    agent_factory = AgentFactory(cfg.env, cfg.alg, custom_exploration_function)
 
     if n_runs > 1:
         return run_batch(env_factory, agent_factory, T, n_runs, seed)

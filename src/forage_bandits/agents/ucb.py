@@ -25,7 +25,7 @@ Both variants share the same incremental update logic and RNG handling.
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Callable
 
 import numpy as np
 
@@ -57,6 +57,8 @@ class UCB(AgentBase):
         Optional NumPy ``Generator`` or integer seed.
     eta:
         Pseudo-count for unseen arms. Default is 1 for EA-UCB, 0 for baseline.
+    custom_exploration_function:
+        Custom exploration function to use. Default is None. Accepts energy and energy_adaptive as arguments.
     """
 
     def __init__(
@@ -71,15 +73,9 @@ class UCB(AgentBase):
         energy_factor_alg: str = "linear",
         rng: Optional[np.random.Generator | int] = None,
         eta: int | float | None = None,
+        custom_exploration_function: Callable[[float, bool], float] = None,
     ) -> None:
         super().__init__(n_arms)
-
-        # if c <= 0:
-        #     raise ValueError("c must be positive")
-        # if not 0.0 <= init_energy <= 1.0:
-        #     raise ValueError("init_energy must be in [0, 1]")
-        # if not 0.0 <= forage_cost <= 1.0:
-        #     raise ValueError("forage_cost must be in [0, 1]")
 
         self._c = float(c)
         self.energy_adaptive = bool(energy_adaptive)
@@ -87,7 +83,7 @@ class UCB(AgentBase):
         self.energy = float(init_energy)
         self.Emax: float = Emax
         self.energy_factor_alg = energy_factor_alg
-        
+        self.custom_exploration_function = custom_exploration_function
         # Statistics
         if eta is None:
             eta = 1 if energy_adaptive else 1e-10
@@ -138,6 +134,11 @@ class UCB(AgentBase):
         
         energy_factor = self._get_energy_factor(self.energy / self.Emax) if self.energy_adaptive else 1.0
         energy_factor = max(energy_factor, 0)
+
+        if self.custom_exploration_function is not None:
+            energy_factor = self.custom_exploration_function(self.energy / self.Emax, self.energy_adaptive)
+
+        
         c_eff = self._c * energy_factor  # Scale by energy
         pads = c_eff * np.sqrt((np.log(total_trials)) / (self._counts + self.eta))
         
