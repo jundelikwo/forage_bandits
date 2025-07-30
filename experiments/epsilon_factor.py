@@ -116,8 +116,8 @@ def main(cfg: DictConfig) -> None:
     print(f"cfg: {cfg}")
     
     # Set up x-axis values (number of arms)
-    alpha_range = np.linspace(0, 1, 15)
-    beta_range = np.linspace(0, 1, 15)
+    alpha_range = np.linspace(0, 1, 20)
+    beta_range = np.linspace(-1, 1, 20)
     zipped_range = np.array(np.meshgrid(alpha_range, beta_range)).T.reshape(-1, 2)
 
     # Initialize results dictionaries
@@ -188,14 +188,12 @@ def main(cfg: DictConfig) -> None:
         im = ax.imshow(lifetime_data, cmap='plasma', aspect='auto', origin='lower')
         
         # Set ticks and labels
-        # ax.set_xticks(range(len(beta_range)))
-        # ax.set_yticks(range(len(alpha_range)))
-        # ax.set_xticklabels([f'{b:.2f}' for b in beta_range])
-        # ax.set_yticklabels([f'{a:.2f}' for a in alpha_range])
-        ax.set_xticks([0, int(beta_range.size/2), len(beta_range)-1])
-        ax.set_yticks([0, int(alpha_range.size/2), len(alpha_range)-1])
-        ax.set_xticklabels(['0', '0.50', '1.00'])
-        ax.set_yticklabels(['0', '0.50', '1.00'])
+        beta_midpoint_index = int(beta_range.size/2)
+        alpha_midpoint_index = int(alpha_range.size/2)
+        ax.set_xticks([0, beta_midpoint_index, len(beta_range)-1])
+        ax.set_yticks([0, alpha_midpoint_index, len(alpha_range)-1])
+        ax.set_xticklabels([f"{beta_range[0]:.2f}", f"{beta_range[beta_midpoint_index]:.2f}", f"{beta_range[-1]:.2f}"])
+        ax.set_yticklabels([f"{alpha_range[0]:.2f}", f"{alpha_range[alpha_midpoint_index]:.2f}", f"{alpha_range[-1]:.2f}"])
         
         ax.set_xlabel('Beta')
         ax.set_ylabel('Alpha')
@@ -243,14 +241,12 @@ def main(cfg: DictConfig) -> None:
         im = ax.imshow(regret_data, cmap='plasma', aspect='auto', origin='lower')
         
         # Set ticks and labels
-        # ax.set_xticks(range(len(beta_range)))
-        # ax.set_yticks(range(len(alpha_range)))
-        # ax.set_xticklabels([f'{b:.2f}' for b in beta_range])
-        # ax.set_yticklabels([f'{a:.2f}' for a in alpha_range])
-        ax.set_xticks([0, int(beta_range.size/2), len(beta_range)-1])
-        ax.set_yticks([0, int(alpha_range.size/2), len(alpha_range)-1])
-        ax.set_xticklabels(['0', '0.50', '1.00'])
-        ax.set_yticklabels(['0', '0.50', '1.00'])
+        beta_midpoint_index = int(beta_range.size/2)
+        alpha_midpoint_index = int(alpha_range.size/2)
+        ax.set_xticks([0, beta_midpoint_index, len(beta_range)-1])
+        ax.set_yticks([0, alpha_midpoint_index, len(alpha_range)-1])
+        ax.set_xticklabels([f"{beta_range[0]:.2f}", f"{beta_range[beta_midpoint_index]:.2f}", f"{beta_range[-1]:.2f}"])
+        ax.set_yticklabels([f"{alpha_range[0]:.2f}", f"{alpha_range[alpha_midpoint_index]:.2f}", f"{alpha_range[-1]:.2f}"])
         
         ax.set_xlabel('Beta')
         ax.set_ylabel('Alpha')
