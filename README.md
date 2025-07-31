@@ -127,6 +127,12 @@ python experiments/epsilon_factor.py env=single_optimal env.n_arms=12
 python experiments/epsilon_factor.py env=sigmoid env.n_arms=4
 python experiments/epsilon_factor.py env=sigmoid env.n_arms=12
 python experiments/epsilon_factor.py env=risky_single_optimal env.n_arms=4
+
+python experiments/epsilon_factor_gamma.py env=risky_single_optimal env.n_arms=4
+python experiments/epsilon_factor_gamma.py env=single_optimal env.n_arms=4
+python experiments/epsilon_factor_gamma.py env=single_optimal env.n_arms=12
+python experiments/epsilon_factor_gamma.py env=sigmoid env.n_arms=4
+python experiments/epsilon_factor_gamma.py env=sigmoid env.n_arms=12
 ```
 
 ## Configuration
