@@ -139,6 +139,12 @@ python experiments/ucb_factor.py env=single_optimal env.n_arms=4
 python experiments/ucb_factor.py env=single_optimal env.n_arms=12
 python experiments/ucb_factor.py env=sigmoid env.n_arms=4
 python experiments/ucb_factor.py env=sigmoid env.n_arms=12
+
+python experiments/ts_factor.py env=single_optimal env.n_arms=4
+python experiments/ts_factor.py env=single_optimal env.n_arms=12
+python experiments/ts_factor.py env=sigmoid env.n_arms=4
+python experiments/ts_factor.py env=sigmoid env.n_arms=12
+python experiments/ts_factor.py env=risky_single_optimal env.n_arms=4
 ```
 
 ## Configuration
