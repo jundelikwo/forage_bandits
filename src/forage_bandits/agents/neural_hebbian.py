@@ -288,14 +288,16 @@ class NeuralHebbianAgent(AgentBase):
         
         # Energy-dependent neural noise (more noise when energy is low)
         energy_factor = self._get_energy_factor(self.energy)
-
-        if self.custom_exploration_function is not None:
-            energy_factor = self.custom_exploration_function(self.energy / self.Emax, self.energy_adaptive)
             
         adaptive_noise = self.exploration_noise * energy_factor
+
+        if self.custom_exploration_function is not None:
+            adaptive_noise = self.custom_exploration_function(self.energy / self.Emax, self.energy_adaptive)
         
         # Add exploration noise (simulating neural noise)
-        noise = self._rng.normal(0, adaptive_noise, self.n_arms)
+        noise = self._rng.normal(0, np.abs(adaptive_noise), self.n_arms)
+        if adaptive_noise < 0:
+            noise *= -1
         noisy_values = action_values + noise
         
         # Find the action that would be chosen without noise (true best)
