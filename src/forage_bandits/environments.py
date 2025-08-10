@@ -107,7 +107,7 @@ class SingleOptimalEnv:
         basal_cost = Emax / 10
         mu_opt = 2 * basal_cost  # Optimal arm mean
         mu_sub = 0.2 * mu_opt    # Suboptimal arm mean
-        sigma = 0.1
+        sigma = 0.1 * mu_opt
 
         self._rng = np.random.default_rng(rng)
         self.n_arms = int(n_arms)
@@ -180,7 +180,7 @@ class RiskySingleOptimalEnv:
         mu_opt = 2 * basal_cost  # Optimal arm mean
         mu_risky = 2 * mu_opt  # Risky arm mean
         mu_sub = 0.2 * mu_opt    # Suboptimal arm mean
-        sigma = 0.1
+        sigma = 0.1 * mu_opt
         risky_arm_punishment = -basal_cost # Risky arm punishment
         self.risky_arm_punishment = risky_arm_punishment
 
@@ -366,7 +366,7 @@ class DynamicSingleOptimalEnv:
         basal_cost = Emax / 10
         self.mu_opt = 2 * basal_cost  # Optimal arm mean
         self.mu_sub = 0.2 * self.mu_opt    # Suboptimal arm mean
-        self.sigma = 0.1
+        self.sigma = 0.1 * self.mu_opt
 
         self._rng = np.random.default_rng(rng)
         self.n_arms = int(n_arms)
@@ -528,7 +528,7 @@ class PoissonDynamicSingleOptimalEnv:
         basal_cost = Emax / 10
         self.mu_opt = 2 * basal_cost  # Optimal arm mean
         self.mu_sub = 0.2 * self.mu_opt    # Suboptimal arm mean
-        self.sigma = 0.1
+        self.sigma = 0.1 * self.mu_opt
 
         self._rng = np.random.default_rng(rng)
         self.n_arms = int(n_arms)
