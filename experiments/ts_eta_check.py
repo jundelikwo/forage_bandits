@@ -75,7 +75,7 @@ def run_simulation(
     
     return final_regret, final_regret_std, mean_lifetime, mean_lifetime_std
 
-class UCBFactorFunction:
+class TSFactorFunction:
     """A callable class that can be pickled for multiprocessing."""
     
     def __init__(self, alpha: float, beta: float, energy_factor_alg: str):
@@ -93,8 +93,8 @@ class UCBFactorFunction:
 
         return value
 
-def get_ucb_factor(alpha: float, beta: float, energy_factor_alg: str) -> Callable[[float, bool], float]:
-    return UCBFactorFunction(alpha, beta, energy_factor_alg)
+def get_ts_factor(alpha: float, beta: float, energy_factor_alg: str) -> Callable[[float, bool], float]:
+    return TSFactorFunction(alpha, beta, energy_factor_alg)
 
 # -----------------------------------------------------------------------------
 # Hydra entry‑point
@@ -113,52 +113,75 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize results dictionaries
     results = {
-        "ucb_no_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
-        "ucb_energy_flip": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
-        "ucb_energy_linear": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
+        "ts_no_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
+        "ts_energy_flip": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
+        "ts_energy_linear": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
     }
     
-    # These are the optimal values for the UCB factor gotten from the ucb_factor.py experiment
-    no_energy_custom_exploration_factor = get_ucb_factor(0.11, 0, "linear")
-    linear_custom_exploration_factor = get_ucb_factor(1.0, -0.79, "linear")
-    flip_custom_exploration_factor = get_ucb_factor(0.16, 1.0, "flip_exp")
+    # These are the optimal values for the TS factor gotten from the ts_factor.py experiment
+    no_energy_custom_exploration_factor = get_ts_factor(0.11, 0, "linear")
+
+    linear_alpha = 1.0
+    linear_beta = -0.79
+    flip_alpha = 0.16
+    flip_beta = 1.0
+
+    if cfg.env.name == "single_optimal":
+        linear_alpha = 1.0 if cfg.env.n_arms == 4 else 0.05
+        linear_beta = -0.89 if cfg.env.n_arms == 4 else 0.05
+        flip_alpha = 0.05 if cfg.env.n_arms == 4 else 0.05
+        flip_beta = 0.68 if cfg.env.n_arms == 4 else 0.05
+    elif cfg.env.name == "risky_single_optimal":
+        linear_alpha = 1.0
+        linear_beta = -1.0
+        flip_alpha = 0.05
+        flip_beta = 0.26
+    elif cfg.env.name == "sigmoid":
+        linear_alpha = 0.26 if cfg.env.n_arms == 4 else 0.16
+        linear_beta = -0.16 if cfg.env.n_arms == 4 else -0.16
+        flip_alpha = 0.05 if cfg.env.n_arms == 4 else 0.05
+        flip_beta = 0.16 if cfg.env.n_arms == 4 else -0.05
+
+    linear_custom_exploration_factor = get_ts_factor(linear_alpha, linear_beta, "linear")
+    flip_custom_exploration_factor = get_ts_factor(flip_alpha, flip_beta, "flip_exp")
+    
     # Run simulations for each number of arms
     for eta in eta_range:
         print(f"\nRunning simulations for eta = {eta}")
         
         # ε-Greedy
-        print("  UCB (no energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ucb", False, eta=eta, custom_exploration_function=no_energy_custom_exploration_factor)
-        results["ucb_no_energy"]["lifetime"][eta] = lifetime
-        results["ucb_no_energy"]["lifetime_std"][eta] = lifetime_std
-        results["ucb_no_energy"]["regret"][eta] = regret
-        results["ucb_no_energy"]["regret_std"][eta] = regret_std
+        print("  TS (no energy)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ts", False, eta=eta, custom_exploration_function=no_energy_custom_exploration_factor)
+        results["ts_no_energy"]["lifetime"][eta] = lifetime
+        results["ts_no_energy"]["lifetime_std"][eta] = lifetime_std
+        results["ts_no_energy"]["regret"][eta] = regret
+        results["ts_no_energy"]["regret_std"][eta] = regret_std
 
-        print("  UCB (energy, flip)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ucb", True, eta=eta, custom_exploration_function=flip_custom_exploration_factor)
-        results["ucb_energy_flip"]["lifetime"][eta] = lifetime
-        results["ucb_energy_flip"]["lifetime_std"][eta] = lifetime_std
-        results["ucb_energy_flip"]["regret"][eta] = regret
-        results["ucb_energy_flip"]["regret_std"][eta] = regret_std
+        print("  TS (energy, flip)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ts", True, eta=eta, custom_exploration_function=flip_custom_exploration_factor)
+        results["ts_energy_flip"]["lifetime"][eta] = lifetime
+        results["ts_energy_flip"]["lifetime_std"][eta] = lifetime_std
+        results["ts_energy_flip"]["regret"][eta] = regret
+        results["ts_energy_flip"]["regret_std"][eta] = regret_std
         
-        print("  UCB (energy, linear)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ucb", True, eta=eta, custom_exploration_function=linear_custom_exploration_factor)
-        results["ucb_energy_linear"]["lifetime"][eta] = lifetime
-        results["ucb_energy_linear"]["lifetime_std"][eta] = lifetime_std
-        results["ucb_energy_linear"]["regret"][eta] = regret
-        results["ucb_energy_linear"]["regret_std"][eta] = regret_std
+        print("  TS (energy, linear)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ts", True, eta=eta, custom_exploration_function=linear_custom_exploration_factor)
+        results["ts_energy_linear"]["lifetime"][eta] = lifetime
+        results["ts_energy_linear"]["lifetime_std"][eta] = lifetime_std
+        results["ts_energy_linear"]["regret"][eta] = regret
+        results["ts_energy_linear"]["regret_std"][eta] = regret_std
     
     # Plot results
     for i in range(2):
         # Create figure with 2 subplots
         fig, axes = plt.subplots(2, figsize=(15, 10))
-        fig.suptitle(f'Effect of varying eta on Performance of UCB agent: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
+        fig.suptitle(f'Effect of varying eta on Performance of TS agent: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
 
         # Plot lifetime (top row)
         ax = axes[0]
         
         # Plot no energy version
-        no_energy = results["ucb_no_energy"]
+        no_energy = results["ts_no_energy"]
         ax.errorbar(
             eta_range,
             [no_energy['lifetime'][n] for n in eta_range],
@@ -169,7 +192,7 @@ def main(cfg: DictConfig) -> None:
         )
         
         # Plot linear energy version
-        linear_energy = results["ucb_energy_linear"]
+        linear_energy = results["ts_energy_linear"]
         ax.errorbar(
             eta_range,
             [linear_energy['lifetime'][n] for n in eta_range],
@@ -181,7 +204,7 @@ def main(cfg: DictConfig) -> None:
         
         if i == 0:
             # Plot flip energy version
-            flip_energy = results["ucb_energy_flip"]
+            flip_energy = results["ts_energy_flip"]
             ax.errorbar(
                 eta_range,
                 [flip_energy['lifetime'][n] for n in eta_range],
@@ -195,7 +218,7 @@ def main(cfg: DictConfig) -> None:
         ax = axes[1]
         
         # Plot no energy version
-        no_energy = results["ucb_no_energy"]
+        no_energy = results["ts_no_energy"]
         ax.errorbar(
             eta_range,
             [no_energy['regret'][n] for n in eta_range],
@@ -206,7 +229,7 @@ def main(cfg: DictConfig) -> None:
         )
         
         # Plot energy version
-        linear_energy = results["ucb_energy_linear"]
+        linear_energy = results["ts_energy_linear"]
         ax.errorbar(
             eta_range,
             [linear_energy['regret'][n] for n in eta_range],
@@ -217,7 +240,7 @@ def main(cfg: DictConfig) -> None:
         )
 
         if i == 0:
-            flip_energy = results["ucb_energy_flip"]
+            flip_energy = results["ts_energy_flip"]
             ax.errorbar(
                 eta_range,
                 [flip_energy['regret'][n] for n in eta_range],
@@ -230,7 +253,7 @@ def main(cfg: DictConfig) -> None:
         # Customize subplot
         axes[0].set_xlabel('eta')
         axes[0].set_ylabel('Mean Lifetime')
-        axes[0].set_title(f'UCB')
+        axes[0].set_title(f'TS')
         axes[0].grid(True, alpha=0.3)
         axes[0].legend()
         
@@ -241,15 +264,15 @@ def main(cfg: DictConfig) -> None:
         
         # Adjust layout and save
         plt.tight_layout()
-        plt.savefig(output_dir / f"{i}_ucb_eta_check_{cfg.env.name}_{cfg.env.n_arms}.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir / f"{i}_ts_eta_check_{cfg.env.name}_{cfg.env.n_arms}.png", dpi=300, bbox_inches='tight')
         plt.close()
     
     # Save results
-    with open(output_dir / f"ucb_eta_check_{cfg.env.name}_{cfg.env.n_arms}.json", "w") as f:
+    with open(output_dir / f"ts_eta_check_{cfg.env.name}_{cfg.env.n_arms}.json", "w") as f:
         json.dump(results, f, indent=2)
     
-    print(f"\nResults saved to experiments/results/ucb_eta_check_{cfg.env.name}_{cfg.env.n_arms}.json")
-    print(f"Plot saved to experiments/results/ucb_eta_check_{cfg.env.name}_{cfg.env.n_arms}.png")
+    print(f"\nResults saved to experiments/results/ts_eta_check_{cfg.env.name}_{cfg.env.n_arms}.json")
+    print(f"Plot saved to experiments/results/ts_eta_check_{cfg.env.name}_{cfg.env.n_arms}.png")
 
 
 if __name__ == "__main__":
