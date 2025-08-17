@@ -116,13 +116,13 @@ def main(cfg: DictConfig) -> None:
     print(f"cfg: {cfg}")
     
     # Set up x-axis values (number of arms)
-    alpha_range = np.linspace(-1, 1, 20)
-    beta_range = np.linspace(-1, 1, 20)
+    alpha_range = np.linspace(-1, 1, 21)
+    beta_range = np.linspace(-1, 1, 21)
     zipped_range = np.array(np.meshgrid(alpha_range, beta_range)).T.reshape(-1, 2)
 
     # Initialize results dictionaries
     results = {
-        "ucb_no_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
+        # "ucb_no_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
         "ucb_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
         "ucb_energy_flip_exp": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
     }
@@ -133,12 +133,12 @@ def main(cfg: DictConfig) -> None:
         custom_exploration_factor = get_ucb_factor(alpha, beta, "linear")
         
         # UCB
-        print("  UCB (no energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ucb", False, eta=0, custom_exploration_function=custom_exploration_factor)
-        results["ucb_no_energy"]["lifetime"][alpha, beta] = lifetime
-        results["ucb_no_energy"]["lifetime_std"][alpha, beta] = lifetime_std
-        results["ucb_no_energy"]["regret"][alpha, beta] = regret
-        results["ucb_no_energy"]["regret_std"][alpha, beta] = regret_std
+        # print("  UCB (no energy)...")
+        # regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ucb", False, eta=0, custom_exploration_function=custom_exploration_factor)
+        # results["ucb_no_energy"]["lifetime"][alpha, beta] = lifetime
+        # results["ucb_no_energy"]["lifetime_std"][alpha, beta] = lifetime_std
+        # results["ucb_no_energy"]["regret"][alpha, beta] = regret
+        # results["ucb_no_energy"]["regret_std"][alpha, beta] = regret_std
         
         print("  UCB (energy)...")
         regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, "ucb", True, eta=1, custom_exploration_function=custom_exploration_factor)
@@ -155,12 +155,15 @@ def main(cfg: DictConfig) -> None:
         results["ucb_energy_flip_exp"]["regret_std"][alpha, beta] = regret_std
     
     # Plot results
-    configs = ["ucb_no_energy", "ucb_energy", "ucb_energy_flip_exp"]
-    titles = ["Non-Energy", "Energy", "Energy, flip_exp"]
+    # configs = ["ucb_no_energy", "ucb_energy", "ucb_energy_flip_exp"]
+    # titles = ["Non-Energy", "Energy", "Energy, flip_exp"]
+    configs = ["ucb_energy", "ucb_energy_flip_exp"]
+    titles = ["Linear Energy model", "Flip Exponential Energy model"]
 
     # Create heatmaps for each configuration
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    fig.suptitle(f'Lifetime Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
+    # fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(18, 6))
+    fig.suptitle(f'Lifetime Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}, uncertainty=30%', fontsize=16)
     
     
     for i, (config, title) in enumerate(zip(configs, titles)):
@@ -197,13 +200,34 @@ def main(cfg: DictConfig) -> None:
         
         ax.set_xlabel('Beta')
         ax.set_ylabel('Alpha')
-        ax.set_title(f'{title} max lifetime: {max_lifetime:.1f}, alpha: {optimal_alpha:.2f}, beta: {optimal_beta:.2f}')
+        ax.set_title(f'{title} (max lifetime: {max_lifetime:.1f}, alpha: {optimal_alpha:.2f}, beta: {optimal_beta:.2f})')
         
         # Add colorbar
         plt.colorbar(im, ax=ax, label='Lifetime')
         
         # Mark optimal point on heatmap
         ax.plot(max_indices[1], max_indices[0], 'r*', markersize=15, markeredgecolor='white', markeredgewidth=2)
+
+        if i == 0:
+            beta_zero_idx = np.where(beta_range == 0.0)[0][0]  # Find index where beta=0
+            alpha_values_at_beta_zero = lifetime_data[:, beta_zero_idx]  # Get all alpha values at beta=0
+            optimal_alpha_at_beta_zero_idx = np.argmax(alpha_values_at_beta_zero)
+            optimal_alpha_at_beta_zero = alpha_range[optimal_alpha_at_beta_zero_idx]
+            max_lifetime_at_beta_zero = alpha_values_at_beta_zero[optimal_alpha_at_beta_zero_idx]
+
+            ax.plot(beta_zero_idx, optimal_alpha_at_beta_zero_idx, 'go', markersize=15, markeredgecolor='white', markeredgewidth=2)
+            
+            print(f"  When beta=0.0:")
+            print(f"    Optimal alpha: {optimal_alpha_at_beta_zero:.2f}")
+            print(f"    Maximum lifetime: {max_lifetime_at_beta_zero:.4f}")
+
+            # Plot blue circle for alpha=0, beta=1
+            alpha_zero_idx = np.where(alpha_range == 0.0)[0][0]  # Find index where alpha=0
+            beta_one_idx = np.where(beta_range == 1.0)[0][0]  # Find index where beta=1
+            ax.plot(beta_one_idx, alpha_zero_idx, 'bo', markersize=15, markeredgecolor='white', markeredgewidth=2)
+
+            print(f"  At alpha=0.0, beta=1.0:")
+            print(f"    Lifetime: {lifetime_data[alpha_zero_idx, beta_one_idx]:.4f}")
     
     # Adjust layout and save
     plt.tight_layout()
@@ -212,8 +236,9 @@ def main(cfg: DictConfig) -> None:
 
 
     # Create heatmaps for each configuration
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    fig.suptitle(f'Regret Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
+    # fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(18, 6))
+    fig.suptitle(f'Regret Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}, uncertainty=30%', fontsize=16)
     
     
     for i, (config, title) in enumerate(zip(configs, titles)):
@@ -250,13 +275,34 @@ def main(cfg: DictConfig) -> None:
         
         ax.set_xlabel('Beta')
         ax.set_ylabel('Alpha')
-        ax.set_title(f'{title} min regret: {min_regret:.1f}, alpha: {optimal_alpha:.2f}, beta: {optimal_beta:.2f}')
+        ax.set_title(f'{title} (min regret: {min_regret:.1f}, alpha: {optimal_alpha:.2f}, beta: {optimal_beta:.2f})')
         
         # Add colorbar
         plt.colorbar(im, ax=ax, label='Regret')
         
         # Mark optimal point on heatmap
         ax.plot(min_indices[1], min_indices[0], 'r*', markersize=15, markeredgecolor='white', markeredgewidth=2)
+
+        if i == 0:
+            beta_zero_idx = np.where(beta_range == 0.0)[0][0]  # Find index where beta=0
+            alpha_values_at_beta_zero = regret_data[:, beta_zero_idx]  # Get all alpha values at beta=0
+            optimal_alpha_at_beta_zero_idx = np.argmin(alpha_values_at_beta_zero)
+            optimal_alpha_at_beta_zero = alpha_range[optimal_alpha_at_beta_zero_idx]
+            min_regret_at_beta_zero = alpha_values_at_beta_zero[optimal_alpha_at_beta_zero_idx]
+
+            ax.plot(beta_zero_idx, optimal_alpha_at_beta_zero_idx, 'go', markersize=15, markeredgecolor='white', markeredgewidth=2)
+            
+            print(f"  When beta=0.0:")
+            print(f"    Optimal alpha: {optimal_alpha_at_beta_zero:.2f}")
+            print(f"    Minimum regret: {min_regret_at_beta_zero:.4f}")
+
+            # Plot blue circle for alpha=0, beta=1
+            alpha_zero_idx = np.where(alpha_range == 0.0)[0][0]  # Find index where alpha=0
+            beta_one_idx = np.where(beta_range == 1.0)[0][0]  # Find index where beta=1
+            ax.plot(beta_one_idx, alpha_zero_idx, 'bo', markersize=15, markeredgecolor='white', markeredgewidth=2)
+            
+            print(f"  At alpha=0.0, beta=1.0:")
+            print(f"    Regret: {regret_data[alpha_zero_idx, beta_one_idx]:.4f}")
     
     # Adjust layout and save
     plt.tight_layout()

@@ -116,8 +116,8 @@ def main(cfg: DictConfig) -> None:
     print(f"cfg: {cfg}")
     
     # Set up x-axis values (number of arms)
-    alpha_range = np.linspace(0, 1, 20)
-    beta_range = np.linspace(-1, 1, 20)
+    alpha_range = np.linspace(0, 1, 21)
+    beta_range = np.linspace(-1, 1, 21)
     zipped_range = np.array(np.meshgrid(alpha_range, beta_range)).T.reshape(-1, 2)
 
     # Initialize results dictionaries
