@@ -157,6 +157,18 @@ python experiments/ucb_eta_check.py env=single_optimal env.n_arms=4
 python experiments/ucb_eta_check.py env=single_optimal env.n_arms=12
 python experiments/ucb_eta_check.py env=sigmoid env.n_arms=4
 python experiments/ucb_eta_check.py env=sigmoid env.n_arms=12
+
+python experiments/ts_eta_check.py env=risky_single_optimal env.n_arms=4
+python experiments/ts_eta_check.py env=single_optimal env.n_arms=4
+python experiments/ts_eta_check.py env=single_optimal env.n_arms=12
+python experiments/ts_eta_check.py env=sigmoid env.n_arms=4
+python experiments/ts_eta_check.py env=sigmoid env.n_arms=12
+
+python experiments/ucb_optimal_mean_check.py env=risky_single_optimal env.n_arms=4
+python experiments/ucb_optimal_mean_check.py env=single_optimal env.n_arms=4
+python experiments/ucb_optimal_mean_check.py env=single_optimal env.n_arms=12
+python experiments/ucb_optimal_mean_check.py env=sigmoid env.n_arms=4
+python experiments/ucb_optimal_mean_check.py env=sigmoid env.n_arms=12
 ```
 
 ## Configuration

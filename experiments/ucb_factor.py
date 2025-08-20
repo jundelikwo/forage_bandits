@@ -163,7 +163,7 @@ def main(cfg: DictConfig) -> None:
     # Create heatmaps for each configuration
     # fig, axes = plt.subplots(1, 3, figsize=(18, 6))
     fig, axes = plt.subplots(1, 2, figsize=(18, 6))
-    fig.suptitle(f'Lifetime Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}, uncertainty=30%', fontsize=16)
+    fig.suptitle(f'Lifetime Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
     
     
     for i, (config, title) in enumerate(zip(configs, titles)):
@@ -238,7 +238,7 @@ def main(cfg: DictConfig) -> None:
     # Create heatmaps for each configuration
     # fig, axes = plt.subplots(1, 3, figsize=(18, 6))
     fig, axes = plt.subplots(1, 2, figsize=(18, 6))
-    fig.suptitle(f'Regret Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}, uncertainty=30%', fontsize=16)
+    fig.suptitle(f'Regret Heatmaps for Different UCB Configurations: {cfg.env.name} environment, n_arms={cfg.env.n_arms}', fontsize=16)
     
     
     for i, (config, title) in enumerate(zip(configs, titles)):
