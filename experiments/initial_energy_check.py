@@ -70,7 +70,9 @@ def run_simulation(
     
     # Calculate mean lifetime and std
     if result.energy is not None:
-        hazard = result.hazard
+        rewards = result.rewards
+        energy = energy_trajectory(rewards, Mf=np.log(50)/10, M0=init_energy)
+        hazard = hazard_curve(energy)
         lifetimes = predicted_lifetime(hazard)
         mean_lifetime = float(np.mean(lifetimes))
         mean_lifetime_std = float(np.std(lifetimes))
@@ -93,7 +95,7 @@ def main(cfg: DictConfig) -> None:
     
     # Set up x-axis values (number of arms)
     Emax = np.log(50)
-    init_energy_range = np.linspace(0, Emax, 50)
+    init_energy_range = np.linspace(0, Emax, 20)
 
     # Initialize results dictionaries
     results = {
