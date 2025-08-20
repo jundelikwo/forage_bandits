@@ -104,8 +104,7 @@ class SingleOptimalEnv:
             raise ValueError("SingleOptimalEnv requires at least 2 arms.")
         
         Emax = np.log(50)
-        basal_cost = Emax / 10
-        mu_opt = 2 * basal_cost  # Optimal arm mean
+        mu_opt = mu_opt * Emax  # Optimal arm mean
         mu_sub = 0.2 * mu_opt    # Suboptimal arm mean
         sigma = 0.1 * mu_opt
 
@@ -177,7 +176,7 @@ class RiskySingleOptimalEnv:
         
         Emax = np.log(50)
         basal_cost = Emax / 10
-        mu_opt = 2 * basal_cost  # Optimal arm mean
+        mu_opt = mu_opt * Emax  # Optimal arm mean
         mu_risky = 2 * mu_opt  # Risky arm mean
         mu_sub = 0.2 * mu_opt    # Suboptimal arm mean
         sigma = 0.1 * mu_opt
@@ -245,11 +244,8 @@ class SigmoidEnv:
         self.n_arms = int(n_arms)
         self.k = float(k)
         self.sigma = float(sigma)
-        self.mu_opt = float(mu_opt)
         Emax = np.log(50)
-        basal_cost = Emax / 10
-        mu_opt = 2 * basal_cost  # Optimal arm mean
-        self.mu_opt = mu_opt
+        self.mu_opt = mu_opt * Emax  # Optimal arm mean
 
         # Compute means once
         self._means = np.array([

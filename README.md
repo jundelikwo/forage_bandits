@@ -169,6 +169,17 @@ python experiments/ucb_optimal_mean_check.py env=single_optimal env.n_arms=4
 python experiments/ucb_optimal_mean_check.py env=single_optimal env.n_arms=12
 python experiments/ucb_optimal_mean_check.py env=sigmoid env.n_arms=4
 python experiments/ucb_optimal_mean_check.py env=sigmoid env.n_arms=12
+
+python experiments/ts_optimal_mean_check.py env=risky_single_optimal env.n_arms=4
+python experiments/ts_optimal_mean_check.py env=single_optimal env.n_arms=4
+python experiments/ts_optimal_mean_check.py env=single_optimal env.n_arms=12
+python experiments/ts_optimal_mean_check.py env=sigmoid env.n_arms=4
+python experiments/ts_optimal_mean_check.py env=sigmoid env.n_arms=12
+
+python experiments/optimal_initial_energy_check.py env.n_arms=4
+python experiments/optimal_initial_energy_check.py env.n_arms=12
+python experiments/optimal_initial_energy_check.py env.n_arms=4 env=sigmoid
+python experiments/optimal_initial_energy_check.py env.n_arms=12 env=sigmoid
 ```
 
 ## Configuration
