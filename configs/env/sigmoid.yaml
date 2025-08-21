@@ -4,3 +4,5 @@ n_arms: 11             # arms indexed 0 … K-1
 k: 10            # slope of the logistic
 sigma: 0.02
 mu_opt: 0.2
+has_uncertainty: false
+uncertainty_level: 0.0

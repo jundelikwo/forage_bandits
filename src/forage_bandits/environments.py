@@ -237,6 +237,8 @@ class SigmoidEnv:
         mu_opt: float = 0.2,
         k: float = 10.0,
         sigma: float = 0.02,
+        has_uncertainty: bool = False,
+        uncertainty_level: float = 0.0,
         rng: Union[int, np.random.Generator, None] = None,
         **kwargs,
     ) -> None:
@@ -246,6 +248,8 @@ class SigmoidEnv:
         self.sigma = float(sigma)
         Emax = np.log(50)
         self.mu_opt = mu_opt * Emax  # Optimal arm mean
+        self.has_uncertainty = has_uncertainty
+        self.uncertainty_level = uncertainty_level
 
         # Compute means once
         self._means = np.array([
@@ -255,6 +259,12 @@ class SigmoidEnv:
 
     # ------------------------------------------------------------------
     def pull(self, arm: int) -> float:  # noqa: D401
+        if self.has_uncertainty and self._rng.random() < self.uncertainty_level:
+            # Select a random arm
+            new_arm = self._rng.integers(self.n_arms)
+            while new_arm == arm:
+                new_arm = self._rng.integers(self.n_arms)
+            arm = new_arm
         reward = self._rng.normal(self._means[arm], 0.1 * self.mu_opt)
         return reward
 

@@ -180,6 +180,9 @@ python experiments/optimal_initial_energy_check.py env.n_arms=4
 python experiments/optimal_initial_energy_check.py env.n_arms=12
 python experiments/optimal_initial_energy_check.py env.n_arms=4 env=sigmoid
 python experiments/optimal_initial_energy_check.py env.n_arms=12 env=sigmoid
+
+python experiments/uncertainty_check.py env.n_arms=4 env=sigmoid
+python experiments/uncertainty_check.py env.n_arms=12 env=sigmoid
 ```
 
 ## Configuration
