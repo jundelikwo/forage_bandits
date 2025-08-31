@@ -247,7 +247,7 @@ def _make_agent_from_cfg(cfg, env: BanditEnvBase, rng: int | None = None, custom
         return EpsilonGreedy(
             n_arms=n_arms,
             Emax=np.log(50),
-            epsilon=float(getattr(cfg, "epsilon", 0.2)),
+            epsilon=float(getattr(cfg, "epsilon", 0.4)),
             eta=float(getattr(cfg, "eta", 1.0)),
             energy_adaptive=energy_adaptive,
             forage_cost=float(getattr(cfg, "forage_cost", np.log(50)/10)),

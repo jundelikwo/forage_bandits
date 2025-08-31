@@ -1,6 +1,6 @@
 # ε-Greedy (baseline) and Energy-Adaptive ε-Greedy
 name: egree
-epsilon: 0.2
+epsilon: 0.4
 eta: 1                     # pseudo-count for unseen arms
 energy_adaptive: false     # set to true for EA-ε-Greedy
 Mf: ${Mf}                  # inherit global forage-cost

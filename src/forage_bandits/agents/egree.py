@@ -56,7 +56,7 @@ class EpsilonGreedy(AgentBase):
     def __init__(
         self,
         n_arms: int,
-        epsilon: float = 0.2,
+        epsilon: float = 0.4,
         *,
         energy_adaptive: bool = False,
         init_energy: float = 1.0,
