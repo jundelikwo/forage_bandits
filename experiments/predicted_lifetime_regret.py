@@ -17,6 +17,7 @@ def run_simulation(
     alg_name: str,
     energy_adaptive: bool,
     eta: float = 1.0,
+    energy_factor: str = "linear",
 ) -> Tuple[float, float, float, float]:
     """Run a single simulation and return final regret and mean lifetime.
 
@@ -54,6 +55,7 @@ def run_simulation(
     sim_cfg.alg.name = alg_name
     sim_cfg.alg.energy_adaptive = energy_adaptive
     sim_cfg.alg.eta = eta
+    sim_cfg.alg.energy_factor_alg = energy_factor
     
     # Run simulation
     result = from_config(sim_cfg)
@@ -92,10 +94,13 @@ def main(cfg: DictConfig) -> None:
     results = {
         "e_greedy_no_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
         "e_greedy_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
+        "e_greedy_energy_flip_exp": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
         "ucb_no_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
         "ucb_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
+        "ucb_energy_flip_exp": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
         "ts_no_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
         "ts_energy": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
+        "ts_energy_flip_exp": {"regret": {}, "regret_std": {}, "lifetime": {}, "lifetime_std": {}},
     }
     print(f"cfg: {cfg}")
     
@@ -111,12 +116,19 @@ def main(cfg: DictConfig) -> None:
         results["e_greedy_no_energy"]["lifetime"][n_arms] = lifetime
         results["e_greedy_no_energy"]["lifetime_std"][n_arms] = lifetime_std
         
-        print("  ε-Greedy (energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "egree", True, eta=1)
+        print("  ε-Greedy (energy, linear)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "egree", True, eta=1, energy_factor="linear")
         results["e_greedy_energy"]["regret"][n_arms] = regret
         results["e_greedy_energy"]["regret_std"][n_arms] = regret_std
         results["e_greedy_energy"]["lifetime"][n_arms] = lifetime
         results["e_greedy_energy"]["lifetime_std"][n_arms] = lifetime_std
+        
+        print("  ε-Greedy (energy, flip_exp)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "egree", True, eta=1, energy_factor="flip_exp")
+        results["e_greedy_energy_flip_exp"]["regret"][n_arms] = regret
+        results["e_greedy_energy_flip_exp"]["regret_std"][n_arms] = regret_std
+        results["e_greedy_energy_flip_exp"]["lifetime"][n_arms] = lifetime
+        results["e_greedy_energy_flip_exp"]["lifetime_std"][n_arms] = lifetime_std
         
         # UCB
         print("  UCB (no energy)...")
@@ -126,12 +138,19 @@ def main(cfg: DictConfig) -> None:
         results["ucb_no_energy"]["lifetime"][n_arms] = lifetime
         results["ucb_no_energy"]["lifetime_std"][n_arms] = lifetime_std
         
-        print("  UCB (energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ucb", True, eta=1)
+        print("  UCB (energy, linear)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ucb", True, eta=1, energy_factor="linear")
         results["ucb_energy"]["regret"][n_arms] = regret
         results["ucb_energy"]["regret_std"][n_arms] = regret_std
         results["ucb_energy"]["lifetime"][n_arms] = lifetime
         results["ucb_energy"]["lifetime_std"][n_arms] = lifetime_std
+        
+        print("  UCB (energy, flip_exp)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ucb", True, eta=1, energy_factor="flip_exp")
+        results["ucb_energy_flip_exp"]["regret"][n_arms] = regret
+        results["ucb_energy_flip_exp"]["regret_std"][n_arms] = regret_std
+        results["ucb_energy_flip_exp"]["lifetime"][n_arms] = lifetime
+        results["ucb_energy_flip_exp"]["lifetime_std"][n_arms] = lifetime_std
         
         # Thompson Sampling
         print("  TS (no energy)...")
@@ -141,17 +160,24 @@ def main(cfg: DictConfig) -> None:
         results["ts_no_energy"]["lifetime"][n_arms] = lifetime
         results["ts_no_energy"]["lifetime_std"][n_arms] = lifetime_std
         
-        print("  TS (energy)...")
-        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ts", True, eta=1)
+        print("  TS (energy, linear)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ts", True, eta=1, energy_factor="linear")
         results["ts_energy"]["regret"][n_arms] = regret
         results["ts_energy"]["regret_std"][n_arms] = regret_std
         results["ts_energy"]["lifetime"][n_arms] = lifetime
         results["ts_energy"]["lifetime_std"][n_arms] = lifetime_std
+        
+        print("  TS (energy, flip_exp)...")
+        regret, regret_std, lifetime, lifetime_std = run_simulation(cfg, n_arms, "ts", True, eta=1, energy_factor="flip_exp")
+        results["ts_energy_flip_exp"]["regret"][n_arms] = regret
+        results["ts_energy_flip_exp"]["regret_std"][n_arms] = regret_std
+        results["ts_energy_flip_exp"]["lifetime"][n_arms] = lifetime
+        results["ts_energy_flip_exp"]["lifetime_std"][n_arms] = lifetime_std
     
     # Plot results
     # Create figure with 2x3 subplots
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    fig.suptitle(f'Effect of Number of Arms on Performance: {cfg.env.name} environment', fontsize=16)
+    fig, axes = plt.subplots(2, 3, figsize=(15, 15))
+    # fig.suptitle(f'Effect of Number of Arms on Performance: {cfg.env.name} environment', fontsize=24)
     
     # Set up x-axis values (number of arms)
     n_arms_range = list(range(2, 16))
@@ -177,17 +203,39 @@ def main(cfg: DictConfig) -> None:
             n_arms_range,
             [energy['lifetime'][n] for n in n_arms_range],
             # yerr=[energy['lifetime_std'][n] for n in n_arms_range],
-            label='Energy',
+            label='HLM Energy',
+            marker='s',
+            capsize=5
+        )
+        energy = results[f"{alg}_energy_flip_exp"]
+        ax.errorbar(
+            n_arms_range,
+            [energy['lifetime'][n] for n in n_arms_range],
+            # yerr=[energy['lifetime_std'][n] for n in n_arms_range],
+            label='DLM Energy',
             marker='s',
             capsize=5
         )
         
         # Customize subplot
-        ax.set_xlabel('Number of Arms')
-        ax.set_ylabel('Mean Lifetime')
-        ax.set_title(f'{alg.upper()}')
+        ax.set_xticks([5, 10, 15], labels=[5, 10, 15], fontsize=22)
+        if col == 0:
+            ax.set_yticks([30, 35, 40, 45, 50], labels=[30, 35, 40, 45, 50], fontsize=22)
+            ax.set_ylabel('Mean Lifetime', fontsize=24)
+        else:
+            ax.set_yticks([30, 35, 40, 45, 50], labels=["", "", "", "", ""], fontsize=22)
+        # ax.set_xlabel('Number of Arms', fontsize=24)
+        title = alg.upper()
+        if title == 'E_GREEDY':
+            title = 'ε-Greedy'
+        # elif title == 'UCB':
+        #     title = 'UCB'
+        # elif title == 'TS':
+        #     title = 'Thompson Sampling'
+        ax.set_title(f'{title}', fontsize=26)
+        ax.tick_params(axis='both', which='major', labelsize=20)
         ax.grid(True, alpha=0.3)
-        ax.legend()
+        ax.legend(fontsize=24)
     
     # Plot regret (bottom row)
     for col, alg in enumerate(['e_greedy', 'ucb', 'ts']):
@@ -210,16 +258,33 @@ def main(cfg: DictConfig) -> None:
             n_arms_range,
             [energy['regret'][n] for n in n_arms_range],
             # yerr=[energy['regret_std'][n] for n in n_arms_range],
-            label='Energy',
+            label='HLM Energy',
+            marker='s',
+            capsize=5
+        )
+        
+        # Plot energy version
+        energy = results[f"{alg}_energy_flip_exp"]
+        ax.errorbar(
+            n_arms_range,
+            [energy['regret'][n] for n in n_arms_range],
+            # yerr=[energy['regret_std'][n] for n in n_arms_range],
+            label='DLM Energy',
             marker='s',
             capsize=5
         )
         
         # Customize subplot
-        ax.set_xlabel('Number of Arms')
-        ax.set_ylabel('Final Regret')
+        ax.set_xticks([5, 10, 15], labels=[5, 10, 15], fontsize=22)
+        if col == 0:
+            ax.set_yticks([0, 5, 10, 15, 20, 25], labels=[0, 5, 10, 15, 20, 25], fontsize=22)
+            ax.set_ylabel('Regret at T=500', fontsize=24)
+        else:
+            ax.set_yticks([0, 5, 10, 15, 20, 25], labels=["", "", "", "", "", ""], fontsize=22)
+        ax.set_xlabel('Number of Arms', fontsize=24)
+        ax.tick_params(axis='both', which='major', labelsize=20)
         ax.grid(True, alpha=0.3)
-        ax.legend()
+        ax.legend(fontsize=24)
     
     # Adjust layout and save
     plt.tight_layout()
