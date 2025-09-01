@@ -59,6 +59,7 @@ python experiments/pairwise_comparison.py env.n_arms=12
 python experiments/predicted_lifetime_regret.py env=sigmoid
 python experiments/pairwise_comparison.py env.n_arms=10 env=sigmoid
 
+python experiments/predicted_lifetime_regret_novel.py env.n_arms=10 env=sigmoid
 python experiments/predicted_lifetime_regret_novel_arm_initialization.py
 python experiments/predicted_lifetime_regret_novel_arm_initialization.py env=sigmoid
 python experiments/pairwise_comparison_novel_arm_initialization.py env.n_arms=10
